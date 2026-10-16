@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="th"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APF Sales Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Sarabun:wght@300;400;600;700;800&display=swap');
+:root{
+  --green-900:#0f3320;--green-800:#1b4d2e;--green-700:#2d6b1e;--green-600:#3d8b2e;--green-500:#4a9e35;--green-400:#6ab84a;--green-200:#c6e9b0;--green-100:#eaf7e0;--green-50:#f4fbee;
+  --amber:#d4a017;--red:#c62828;--blue:#3b72c4;
+  --bg:#eef1eb;--card:#fff;--border:#dde5d4;
+  --text:#1a2217;--muted:#6b7a62;--light:#a5b49a;
+  --shadow-sm:0 1px 4px rgba(15,51,32,.08);--shadow-md:0 4px 16px rgba(15,51,32,.1);--shadow-lg:0 8px 32px rgba(15,51,32,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'IBM Plex Sans Thai','Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── HEADER ── */
+.hd{background:linear-gradient(135deg,var(--green-900) 0%,var(--green-800) 45%,var(--green-700) 100%);color:#fff;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;min-height:64px;box-shadow:var(--shadow-lg);gap:16px}
+.hd::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none}
+.hd-l{display:flex;align-items:center;gap:14px;flex:1;min-width:0;align-items:flex-start;padding:4px 0}
+.logo{width:44px;height:44px;background:linear-gradient(135deg,rgba(255,215,0,.25),rgba(255,215,0,.1));border:1.5px solid rgba(255,215,0,.4);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;color:#ffd700;letter-spacing:-0.5px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.hd-info{min-width:0;flex:1}
+.hd h1{font-size:15px;font-weight:700;letter-spacing:.2px;white-space:normal;overflow:visible;text-overflow:unset;line-height:1.3}
+.hd .sub{font-size:11px;opacity:.75;margin-top:1px;white-space:normal;flex-wrap:wrap}
+.hd-meta{font-size:10.5px;opacity:.8;margin-top:3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hd-badge{background:rgba(255,255,255,.12);padding:2px 9px;border-radius:20px;white-space:nowrap}
+.hd-copy{font-size:10px;opacity:.85;margin-top:3px;color:#ffd700;font-weight:500}
+.hd-actions{display:flex;gap:7px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.btn-up{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;padding:7px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:600;display:flex;align-items:center;gap:5px;transition:all .18s;white-space:nowrap}
+.btn-up:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.btn-up svg{width:14px;height:14px;flex-shrink:0}
+
+/* ── FILTER BAR ── */
+.fbar{background:#fff;padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--border);box-shadow:0 2px 6px rgba(15,51,32,.10)}
+.fbar>label{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+.fbar .sep{width:1px;height:24px;background:var(--border);margin:0 2px;align-self:center}
+.fbtn{font-family:inherit;font-size:11px;font-weight:700;padding:6px 13px;border-radius:7px;border:none;cursor:pointer;transition:all .15s;align-self:center}
+.fbtn-a{background:var(--green-700);color:#fff}.fbtn-a:hover{background:var(--green-600)}
+.fbtn-r{background:var(--bg);color:var(--muted);border:1px solid var(--border)}.fbtn-r:hover{background:var(--green-100)}
+.ftags{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;align-self:center}
+.ftag{background:var(--green-100);color:var(--green-800);padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:600;display:flex;align-items:center;gap:4px;border:1px solid var(--green-200)}
+.ftag svg{width:11px;height:11px;stroke:var(--green-700)}.ftag .fx{cursor:pointer;opacity:.45;font-size:12px}.ftag .fx:hover{opacity:1}
+.fgroup{position:relative;display:inline-block}
+.fgroup-btn{font-family:inherit;font-size:11.5px;padding:6px 28px 6px 11px;border:1.5px solid var(--border);border-radius:8px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7a62'/%3E%3C/svg%3E") no-repeat right 10px center;cursor:pointer;color:var(--text);min-width:190px;text-align:left;transition:border-color .15s;font-weight:500}
+.fgroup-btn .badge{display:inline-block;background:var(--green-700);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px;vertical-align:middle}
+.fgroup-btn:focus,.fgroup-btn:hover{outline:none;border-color:var(--green-600)}
+.fgroup-drop{position:absolute;top:calc(100% + 5px);left:0;background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);z-index:50;min-width:250px;max-height:280px;overflow-y:auto;display:none;padding:6px 0}
+.fgroup-drop.show{display:block;animation:dd .15s ease}
+@keyframes dd{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.fgroup-drop label{display:flex;align-items:center;gap:9px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:500;color:#333;transition:background .1s;white-space:nowrap;margin:0}
+.fgroup-drop label:hover{background:var(--green-50)}
+.fgroup-drop input[type=checkbox]{width:15px;height:15px;accent-color:var(--green-700);cursor:pointer;flex-shrink:0}
+.fgroup-drop .fall{border-bottom:1px solid var(--border);margin-bottom:4px;padding-bottom:6px;font-weight:700;color:var(--green-800)}
+
+/* ── MODAL ── */
+.modal{position:fixed;inset:0;background:rgba(10,26,15,.55);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.mbox{background:#fff;border-radius:18px;width:500px;max-width:92vw;box-shadow:var(--shadow-lg);animation:mIn .22s cubic-bezier(.34,1.56,.64,1)}
+@keyframes mIn{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
+.mhd{padding:20px 22px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.mhd h2{font-size:16px;font-weight:700;color:var(--green-800)}.mhd .mx{background:none;border:none;font-size:22px;cursor:pointer;color:var(--light);padding:2px 6px;border-radius:7px;line-height:1}.mhd .mx:hover{background:var(--bg);color:var(--muted)}
+.mbd{padding:16px 22px 22px}
+.dz{border:2px dashed var(--green-200);border-radius:14px;padding:34px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--green-50)}
+.dz:hover,.dz.over{border-color:var(--green-500);background:var(--green-100)}.dz.over{transform:scale(1.01)}
+.dz svg{width:42px;height:42px;stroke:var(--green-600);opacity:.5;margin-bottom:10px}.dz.over svg{opacity:1}
+.dz .dt{font-size:14px;font-weight:700;margin-bottom:3px}.dz .dt b{color:var(--green-700);text-decoration:underline}
+.dz .ds{font-size:11px;color:var(--light)}
+.mfl{margin-top:12px;display:flex;flex-direction:column;gap:6px}.mfl:empty{display:none}
+.mf{background:linear-gradient(135deg,#e8f5e9,#c8e6c9);color:#2e7d32;padding:8px 13px;border-radius:9px;font-weight:600;font-size:12px;display:flex;align-items:center;gap:7px}
+.mf svg{width:16px;height:16px;stroke:#2e7d32;flex-shrink:0}.mf span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mf .ms{font-size:10px;color:#558b2f;font-weight:400}.mf .mr{cursor:pointer;opacity:.45;font-size:14px;padding:0 2px}.mf .mr:hover{opacity:1}
+
+/* ── MAIN LAYOUT ── */
+.wrap{max-width:1120px;margin:0 auto;padding:16px 20px 48px}
+
+/* ── SUMMARY CARDS ── */
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+.sc{background:var(--card);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow-sm);border:1px solid var(--border);border-left:4px solid var(--green-700);transition:box-shadow .15s,transform .15s;position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;background:var(--green-50);border-radius:0 0 0 60px;pointer-events:none}
+.sc:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.sc.yl{border-left-color:var(--amber)}.sc.yl::before{background:#fffbeb}
+.sc.rd{border-left-color:var(--red)}.sc.rd::before{background:#fff5f5}
+.sc.bl{border-left-color:var(--blue)}.sc.bl::before{background:#eff6ff}
+.sl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.sv{font-size:18px;font-weight:800;margin-top:3px;letter-spacing:-.5px}
+.ss{font-size:10.5px;color:var(--light);margin-top:2px}
+
+/* ── CHART GRID ── */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cd{background:var(--card);border-radius:14px;box-shadow:var(--shadow-sm);padding:16px;border:1px solid var(--border);overflow:hidden;transition:box-shadow .15s}
+.cd:hover{box-shadow:var(--shadow-md)}
+.cd.fw{grid-column:1/-1}
+.ct{font-size:12.5px;font-weight:700;color:var(--green-800);margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:6px}
+.cc{position:relative;width:100%;height:420px;max-width:100%}.cc.tall{height:520px}
+.cc canvas{max-width:100%!important}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){.grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}.hd-actions{display:none}}
+@media(max-width:600px){.summary{grid-template-columns:1fr 1fr}.fbar{padding:8px 14px}.wrap{padding:12px 12px 40px}}
+
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── 3-TAB LAYOUT ── */
+.tab-nav{display:flex;background:var(--green-900);padding:0 24px;border-bottom:3px solid var(--green-700)}
+.tab-btn{background:none;border:none;color:rgba(255,255,255,.6);padding:10px 22px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-3px;transition:color .15s,border-color .15s;white-space:nowrap}
+.tab-btn:hover{color:#fff;background:rgba(255,255,255,.07)}
+.tab-btn.active{color:#ffd700;border-bottom-color:#ffd700}
+.page{display:none}.page.active{display:block}
+</style>
+</head>
+<body>
+<div style="position:sticky;top:0;z-index:100">
+<div class="hd">
+  <div class="hd-l">
+    <div class="logo">APF</div>
+    <div class="hd-info">
+      <h1>บริษัท อะกริโปรตีนฟู๊ดส์ จำกัด</h1>
+      <div class="sub">Dashboard ยอดขาย (ประมาณการ) เทียบเป้าหมาย <span id="hdFile" style="margin-left: 6px; background: rgba(255, 255, 255, 0.15); padding: 2px 9px; border-radius: 20px; font-size: 10px; display: inline;">📁 กราฟรายงานยอดขาย 151069.xlsx</span></div>
+      <div class="hd-meta">
+        <span id="hdPeriod" class="hd-badge">📅 ไฟล์: กราฟรายงานยอดขาย 151069 (12 เดือน)</span>
+        <span id="hdUpload" class="hd-badge">📤 วันที่ Upload: 15/10/2569 16:25</span>
+      </div>
+      <div class="hd-copy">© สงวนลิขสิทธิ์ โดย พันธุ์เทพ เล็กสกุลกมลศิริ</div>
+    </div>
+  </div>
+  <div class="hd-actions">
+    <button class="btn-up" id="btnOpen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>เปลี่ยนแหล่งข้อมูล</button>
+    <button class="btn-up" onclick="promptLink()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>เปลี่ยนด้วยลิงค์</button>
+    <button class="btn-up" id="btnUpdate" onclick="updateFromLink()" style="background: rgba(30, 136, 229, 0.2); border-color: rgba(30, 136, 229, 0.5); display: inline-flex;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>อัพเดทข้อมูล</button>
+    <button class="btn-up" onclick="saveDashboard()" style="background:rgba(255,220,50,.2);border-color:rgba(255,220,50,.5)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>Save Dashboard</button>
+  </div>
+</div>
+
+<div class="fbar">
+  <label id="monthLabel" style="display:inline-block">🗓️ เดือน</label>
+  <div class="fgroup" id="monthGroup" style="display: inline-block;">
+    <button class="fgroup-btn" id="monthBtn" onclick="toggleDrop('monthDrop')">ม.ค., ก.พ., มี.ค., เม.ย., พ.ค., มิ.ย., ก.ค., ส.ค., ก.ย., ต.ค. <span class="badge" id="monthBadge">10/12</span> ▾</button>
+    <div class="fgroup-drop" id="monthDrop" style="min-width:160px">
+      <label class="fall"><input type="checkbox" id="mAll" onchange="toggleMonthAll()"> เลือกทั้งหมด</label>
+      <div id="monthCheckboxes"><label><input type="checkbox" class="fm" value="ม.ค." checked="" onchange="onMonthChange()"> ✅ ม.ค. 69</label><label><input type="checkbox" class="fm" value="ก.พ." checked="" onchange="onMonthChange()"> ✅ ก.พ. 69</label><label><input type="checkbox" class="fm" value="มี.ค." checked="" onchange="onMonthChange()"> ✅ มี.ค. 69</label><label><input type="checkbox" class="fm" value="เม.ย." checked="" onchange="onMonthChange()"> ✅ เม.ย. 69</label><label><input type="checkbox" class="fm" value="พ.ค." checked="" onchange="onMonthChange()"> ✅ พ.ค. 69</label><label><input type="checkbox" class="fm" value="มิ.ย." checked="" onchange="onMonthChange()"> ✅ มิ.ย. 69</label><label><input type="checkbox" class="fm" value="ก.ค." checked="" onchange="onMonthChange()"> ✅ ก.ค. 69</label><label><input type="checkbox" class="fm" value="ส.ค." checked="" onchange="onMonthChange()"> ✅ ส.ค. 69</label><label><input type="checkbox" class="fm" value="ก.ย." checked="" onchange="onMonthChange()"> ✅ ก.ย. 69</label><label><input type="checkbox" class="fm" value="ต.ค." checked="" onchange="onMonthChange()"> ✅ ต.ค. 69</label><label><input type="checkbox" class="fm" value="พ.ย." onchange="onMonthChange()"> ⏳ พ.ย. 69</label><label><input type="checkbox" class="fm" value="ธ.ค." onchange="onMonthChange()"> ⏳ ธ.ค. 69</label></div>
+    </div>
+  </div>
+  <div class="sep" id="monthSep" style="display:inline-block"></div>
+  <label>📦 กลุ่มสินค้า</label>
+  <div class="fgroup"><button class="fgroup-btn" id="fgBtn" onclick="toggleDrop('fgDrop')">กลุ่มทั้งหมด <span class="badge">7/7</span> ▾</button>
+    <div class="fgroup-drop" id="fgDrop">
+      <label class="fall"><input type="checkbox" id="fgAll" checked="" onchange="toggleAll('fg')"> เลือกทั้งหมด</label>
+      <label><input type="checkbox" class="fg" value="G1" checked=""> G.1 Premium NON GMO</label>
+      <label><input type="checkbox" class="fg" value="G1g" checked=""> G.1 GMO</label>
+      <label><input type="checkbox" class="fg" value="G2+" checked=""> G.2+ Protein Food</label>
+      <label><input type="checkbox" class="fg" value="G2" checked=""> G.2 Protein Food</label>
+      <label><input type="checkbox" class="fg" value="G3" checked=""> G.3 Soybean Oil</label>
+      <label><input type="checkbox" class="fg" value="other" checked=""> สินค้าอื่นๆ / Acid Oil</label>
+      <label><input type="checkbox" class="fg" value="resale" checked=""> สินค้าซื้อมาขาย</label>
+    </div>
+  </div>
+  <div class="sep"></div>
+  <label>🏷️ ชื่อสินค้า</label>
+  <div class="fgroup"><button class="fgroup-btn" id="fpBtn" onclick="toggleDrop('fpDrop')">สินค้าทั้งหมด <span class="badge">11/11</span> ▾</button>
+    <div class="fgroup-drop" id="fpDrop">
+      <label class="fall"><input type="checkbox" id="fpAll" checked="" onchange="toggleAll('fp')"> เลือกทั้งหมด</label>
+      <label><input type="checkbox" class="fp" value="LCD1" checked=""> LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)</label>
+      <label><input type="checkbox" class="fp" value="LCD1g" checked=""> LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)</label>
+      <label><input type="checkbox" class="fp" value="LCD2c" checked=""> LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)</label>
+      <label><input type="checkbox" class="fp" value="LCD2m" checked=""> LCD2 กากถั่วเหลือง โปรตีน 44%</label>
+      <label><input type="checkbox" class="fp" value="LCD2m46" checked=""> LCD2 กากถั่วเหลือง โปรตีน 46%</label>
+      <label><input type="checkbox" class="fp" value="LCD4" checked=""> LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม</label>
+      <label><input type="checkbox" class="fp" value="LCD5" checked=""> LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง</label>
+      <label><input type="checkbox" class="fp" value="LCD6" checked=""> LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์</label>
+      <label><input type="checkbox" class="fp" value="LCD3" checked=""> LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง</label>
+      <label><input type="checkbox" class="fp" value="LCD7" checked=""> LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง</label>
+      <label><input type="checkbox" class="fp" value="resale" checked=""> สินค้าซื้อมาขาย</label>
+    </div>
+  </div>
+  <div class="sep"></div>
+  <button class="fbtn fbtn-r" onclick="resetFilter()" style="align-self:center">รีเซ็ตทั้งหมด</button>
+  <div class="ftags" id="fileTags"></div>
+</div>
+<div class="tab-nav" id="tabNav">
+  <button class="tab-btn" onclick="switchTab(0)">📋 สรุปผลทั้งปี</button>
+  <button class="tab-btn active" onclick="switchTab(1)">📈 Dashboard รายเดือน</button>
+</div>
+</div><!-- /sticky-nav -->
+
+
+<div class="modal" id="modal"><div class="mbox"><div class="mhd"><h2>📁 เปลี่ยนแหล่งข้อมูล</h2><button class="mx" id="btnClose">×</button></div><div class="mbd">
+<div class="dz" id="dz"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg><div class="dt">ลากไฟล์วางที่นี่ หรือ <b>คลิกเลือกไฟล์</b></div><div class="ds">รองรับ .xlsx .xls .csv</div></div>
+<div class="mfl" id="mfl"><div class="mf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg><span>กราฟรายงานยอดขาย 151069.xlsx</span><span class="ms">207 KB</span><span class="mr" onclick="rmF(0)">✕</span></div></div>
+<div id="mStatus" style="display: block; margin-top: 12px; padding: 12px; border-radius: 10px; font-size: 13px; background: rgb(212, 237, 218); color: rgb(21, 87, 36);">✅ โหลดสำเร็จ! <b>กราฟรายงานยอดขาย 151069.xlsx</b> (207 KB)<br>📊 Parse ได้ <b>12 เดือน</b><br>🗓️ แสดงข้อมูลเดือน: <b>ต.ค.</b><br>💡 ใช้ dropdown ด้านบนเพื่อสลับดูเดือนอื่น<br><details style="margin-top:6px;font-size:11px"><summary>รายละเอียดแต่ละเดือน</summary>✅ ม.ค.: 11 items, stock=0, ยอดขาย=72,031,885<br>✅ ก.พ.: 11 items, stock=0, ยอดขาย=57,596,274<br>✅ มี.ค.: 11 items, stock=0, ยอดขาย=101,895,390<br>✅ เม.ย.: 11 items, stock=0, ยอดขาย=89,333,324<br>✅ พ.ค.: 11 items, stock=0, ยอดขาย=75,653,600<br>✅ มิ.ย.: 11 items, stock=0, ยอดขาย=74,744,720<br>✅ ก.ค.: 11 items, stock=0, ยอดขาย=83,489,050<br>✅ ส.ค.: 11 items, stock=0, ยอดขาย=95,306,067<br>✅ ก.ย.: 11 items, stock=0, ยอดขาย=70,582,184<br>✅ ต.ค.: 11 items, stock=0, ยอดขาย=89,976,965<br>⏳ พ.ย.: 11 items, stock=0, ยอดขาย=0<br>⏳ ธ.ค.: 11 items, stock=0, ยอดขาย=0</details></div>
+<div id="mActions" style="display:none;margin-top:12px;display:flex;gap:10px;justify-content:center">
+  <button class="fbtn fbtn-a" id="mViewBtn" onclick="modal.classList.remove('show')" style="display: inline-block; padding: 10px 24px; font-size: 13px;">📊 ดูข้อมูล</button>
+</div>
+<input type="file" id="fi" accept=".xlsx,.xls,.csv" style="display:none">
+</div></div></div>
+
+<div class="wrap">
+
+<div id="mainPages">
+<div class="page" id="page0">
+<!-- ═══ ANNUAL SUMMARY SECTION ═══ -->
+<div id="annualSection" style="margin-bottom: 14px; display: block;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <div style="font-size:13px;font-weight:800;color:var(--green-800);letter-spacing:.3px">🎯 <span id="annualTitle">สรุปผลตามเดือนที่เลือก (เฉพาะ ม.ค., ก.พ., มี.ค., เม.ย., พ.ค., มิ.ย., ก.ค., ส.ค., ก.ย., ต.ค.)</span></div>
+    <div id="annualMonthsTag" style="background:var(--green-100);color:var(--green-800);font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid var(--green-200)">เดือนที่เลือก ม.ค., ก.พ., มี.ค., เม.ย., พ.ค., มิ.ย., ก.ค., ส.ค., ก.ย., ต.ค. • มีข้อมูล 10/10 เดือน • ทุกสินค้า</div>
+  </div>
+
+  <!-- Progress bars row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px" id="annualProgressCards">
+
+    <!-- ยอดขาย บาท -->
+    <div class="cd" style="padding:16px 18px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💰 ยอดขายสะสม (บาท)</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <div style="font-size:20px;font-weight:800;color:var(--green-700)" id="an_eB">832.0 ล้านบาท</div>
+        <div style="font-size:11px;color:var(--muted)">เป้า: <span id="an_tB" style="font-weight:700;color:var(--text)">1,029.6 ล้านบาท</span></div>
+      </div>
+      <div style="background:#e8f0e4;border-radius:99px;height:10px;overflow:hidden;margin-bottom:8px">
+        <div id="an_eB_bar" style="height: 100%; background: linear-gradient(90deg,var(--green-700),var(--green-500)); border-radius: 99px; transition: width 0.6s; width: 80.8113%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px">
+        <span style="font-weight: 700; color: rgb(198, 40, 40);" id="an_eB_pct">80.8%</span>
+        <span id="an_eB_diff" style="font-weight: 600; color: rgb(198, 40, 40);">-197.6 ล้านบาท</span>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">
+        ยังต้องทำเพิ่ม: <span id="an_eB_gap" style="font-weight: 800; font-size: 13px; color: rgb(198, 40, 40);">197.6 ล้านบาท</span>
+      </div>
+    </div>
+
+    <!-- ยอดขาย ตัน -->
+    <div class="cd" style="padding:16px 18px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">⚖️ ยอดขายสะสม (น้ำหนัก)</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <div style="font-size:20px;font-weight:800;color:var(--green-700)" id="an_eK">37,347 ตัน</div>
+        <div style="font-size:11px;color:var(--muted)">เป้า: <span id="an_tK" style="font-weight:700;color:var(--text)">47,079 ตัน</span></div>
+      </div>
+      <div style="background:#e8f0e4;border-radius:99px;height:10px;overflow:hidden;margin-bottom:8px">
+        <div id="an_eK_bar" style="height: 100%; background: linear-gradient(90deg,var(--green-700),var(--green-500)); border-radius: 99px; transition: width 0.6s; width: 79.3278%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px">
+        <span style="font-weight: 700; color: rgb(198, 40, 40);" id="an_eK_pct">79.3%</span>
+        <span id="an_eK_diff" style="font-weight: 600; color: rgb(198, 40, 40);">-9,732 ตัน</span>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">
+        ยังต้องทำเพิ่ม: <span id="an_eK_gap" style="font-weight: 800; font-size: 13px; color: rgb(198, 40, 40);">9,732 ตัน</span>
+      </div>
+    </div>
+
+    <!-- อัตรากำไรขั้นต้น -->
+    <div class="cd" style="padding:16px 18px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📈 อัตรากำไรขั้นต้น (Gross Margin %)</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <div style="font-size: 20px; font-weight: 800; color: rgb(198, 40, 40);" id="an_ctPct">11.17%</div>
+        <div style="font-size:11px;color:var(--muted)">เป้า: <span id="an_tgPct" style="font-weight:700;color:var(--text)">14.66%</span></div>
+      </div>
+      <div style="background:#e8f0e4;border-radius:99px;height:10px;overflow:hidden;margin-bottom:8px">
+        <div id="an_ct_bar" style="height: 100%; border-radius: 99px; transition: width 0.6s; width: 76.2299%; background: linear-gradient(90deg, rgb(229, 57, 53), rgb(239, 154, 154));"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px">
+        <span style="font-weight: 700; color: rgb(198, 40, 40);" id="an_ct_pct_lbl">76.2% ของเป้า</span>
+        <span id="an_ct_diff" style="font-weight: 600; color: rgb(198, 40, 40);">-3.48%</span>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)">
+        ยังต้องทำเพิ่ม: <span id="an_ct_gap" style="font-weight: 800; font-size: 13px; color: rgb(198, 40, 40);">3.48%</span>
+        <div style="margin-top:4px;font-size:10px;color:var(--light)" id="an_ct_gap_baht">คิดเป็นกำไรที่ต้องทำเพิ่ม ≈ 29.0 ล้านบาท</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detail breakdown table -->
+  <div class="cd fw" style="padding:14px 18px">
+    <div class="ct" style="margin-bottom:4px">📋 <span id="annualTblTitle">รายละเอียดรายเดือน (เทียบเป้าหมายรวมเดือนที่เลือก)</span></div>
+    <div id="annualFilterList" style="display:none;font-size:11px;color:var(--green-800);background:#f1f8e9;border:1px solid #c5e1a5;border-radius:6px;padding:5px 9px;margin-bottom:8px"></div>
+    <div style="overflow-x:auto">
+      <table id="annualTbl" style="width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed">
+        <thead>
+          <tr style="background:var(--green-800);color:#fff">
+            <th style="padding:6px 8px;text-align:left;font-weight:700;white-space:nowrap;width:72px">เดือน</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:128px">เป้าหมาย (บาท)</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:128px">ยอดขาย (บาท)</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:128px">ผลต่าง (บาท)</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:90px">เป้าหมาย (ตัน)</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:90px">ยอดขาย (ตัน)</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:90px">ผลต่าง (ตัน)</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:76px">GP เป้า %</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:76px">GP ทำได้ %</th>
+            <th style="padding:6px 8px;text-align:right;white-space:nowrap;width:76px">GP ต่าง %</th>
+            <th style="padding:6px 8px;text-align:center;white-space:nowrap;width:100px">สถานะ</th>
+          </tr>
+        </thead>
+        <tbody id="annualTblBody"><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">ม.ค. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">88,035,414.87</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">72,595,054.52</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-15,440,360.35</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">4,128.69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">3,520.82</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-607.87</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">16.64%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">11.80%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-4.84%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">ก.พ. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">106,719,530.96</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">57,596,273.57</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-49,123,257.39</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">4,640.74</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">2,902.04</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-1,738.70</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">16.64%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">14.83%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-1.81%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">มี.ค. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">102,089,320.96</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">102,996,705.09</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#2e7d32;font-weight:700">+907,384.13</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">4,566.05</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">4,836.63</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#2e7d32;font-weight:700">+270.58</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">16.64%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">13.11%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-3.53%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#2e7d32;font-weight:700">✅ เกินเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">เม.ย. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">117,901,533.66</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">92,979,904.33</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-24,921,629.33</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">5,439.98</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">4,212.22</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-1,227.76</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">16.64%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">13.22%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-3.42%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">พ.ค. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">120,451,243.61</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">80,625,399.14</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-39,825,844.47</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">5,295.71</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">3,246.74</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-2,048.97</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">16.64%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">11.69%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-4.95%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">มิ.ย. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">109,949,400.64</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">74,746,820.04</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-35,202,580.60</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">4,914.36</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">3,290.05</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-1,624.31</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">15.58%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">11.36%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-4.22%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">ก.ค. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">100,919,483.50</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">83,489,049.92</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-17,430,433.58</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">4,768.62</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">3,666.86</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-1,101.76</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">11.48%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">9.11%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-2.37%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">ส.ค. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">95,445,541.55</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">95,306,067.38</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-139,474.17</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">4,671.66</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">4,328.40</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-343.26</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">11.48%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">6.82%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-4.66%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">ก.ย. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">92,132,615.55</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">70,582,183.80</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-21,550,431.75</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">4,451.07</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">3,684.15</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-766.92</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">11.48%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">9.34%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-2.14%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span></td>
+    </tr><tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">ต.ค. 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">95,923,033.00</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">101,089,245.37</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#2e7d32;font-weight:700">+5,166,212.37</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">4,201.91</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">3,658.67</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-543.24</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">12.10%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">11.32%</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:#c62828;font-weight:700">-0.78%</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap"><span style="color:#2e7d32;font-weight:700">✅ เกินเป้า</span></td>
+    </tr></tbody>
+        <tfoot id="annualTblFoot">
+    <tr style="background:var(--green-800);color:#fff;font-weight:800;font-size:12px">
+      <td style="padding:9px 10px">รวมเดือนที่เลือก</td>
+      <td style="padding:9px 10px;text-align:right">1,029,567,118.30</td>
+      <td style="padding:9px 10px;text-align:right">832,006,703.16</td>
+      <td style="padding:9px 10px;text-align:right;color:#ef9a9a">-197,560,415.14</td>
+      <td style="padding:9px 10px;text-align:right">47,078.79 ตัน</td>
+      <td style="padding:9px 10px;text-align:right">37,346.58 ตัน</td>
+      <td style="padding:9px 10px;text-align:right;color:#ef9a9a">-9,732.21 ตัน</td>
+      <td style="padding:9px 10px;text-align:right">14.66%</td>
+      <td style="padding:9px 10px;text-align:right">11.17%</td>
+      <td style="padding:9px 10px;text-align:right;color:#ef9a9a">-3.48%</td>
+      <td style="padding:9px 10px;text-align:center">⚠️ ต่ำกว่าเป้า</td>
+    </tr></tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+</div><!-- /page0 -->
+
+<div class="page active" id="page1">
+<div class="summary">
+  <div class="sc"><div class="sl">เป้าหมายรวม (บาท) สินค้าผลิต</div><div class="sv" id="s1">1,029,567,118.30</div></div>
+  <div class="sc yl"><div class="sl">ยอดขาย+คาดว่าจะส่ง (บาท)</div><div class="sv" id="s2" style="color:#3d6b1e">810,609,459.16</div></div>
+  <div class="sc rd"><div class="sl">ผลต่าง (บาท)</div><div class="sv" id="s3" style="color: rgb(198, 40, 40);">-218,957,659.14</div><div class="ss" id="s3s">ต่ำกว่าเป้า</div></div>
+  <div class="sc bl"><div class="sl">% ยอดขายรวม / เป้าหมาย</div><div class="sv" id="s_pct" style="color: rgb(198, 40, 40);">78.73%</div></div>
+  <div class="sc"><div class="sl">เป้าหมายรวม (ตัน) สินค้าผลิต</div><div class="sv" id="s_tK">47,078.79 ตัน</div></div>
+  <div class="sc yl"><div class="sl">ยอดขายรวม (ตัน)</div><div class="sv" id="s_eK" style="color:#3d6b1e">36,141.94 ตัน</div></div>
+  <div class="sc rd"><div class="sl">ผลต่าง (ตัน)</div><div class="sv" id="s_dK" style="color: rgb(198, 40, 40);">-10,936.85 ตัน</div><div class="ss" id="s_dKs">ต่ำกว่าเป้า</div></div>
+  <div class="sc bl"><div class="sl">% ยอดขาย(ตัน) / เป้าหมาย(ตัน)</div><div class="sv" id="s_prof" style="color: rgb(198, 40, 40);">76.77%</div><div class="ss" id="s_profs">36,141.94 / 47,078.79 ตัน</div></div>
+</div>
+<div class="summary" style="margin-top:-8px">
+  <div class="sc" style="border-left-color:#8bc34a"><div class="sl">สินค้าอื่นๆ (บาท)</div><div class="sv" id="so_eB" style="color:#548235">9,577,479.50</div></div>
+  <div class="sc" style="border-left-color:#8bc34a"><div class="sl">สินค้าอื่นๆ (ตัน)</div><div class="sv" id="so_eK" style="color:#548235">769.82 ตัน</div></div>
+  <div class="sc" style="border-left-color:#d4a017"><div class="sl">สินค้าซื้อมาขาย (บาท)</div><div class="sv" id="sr_eB" style="color:#d4a017">21,397,244.00</div></div>
+  <div class="sc" style="border-left-color:#d4a017"><div class="sl">สินค้าซื้อมาขาย (ตัน)</div><div class="sv" id="sr_eK" style="color:#d4a017">1,204.64 ตัน</div></div>
+</div>
+<div class="summary" style="margin-top:-8px">
+  <div class="sc" style="border-left-color:#4472c4"><div class="sl">รวมทั้งหมด (บาท) ผลิต+อื่นๆ+ซื้อมา</div><div class="sv" id="sa_eB">832,006,703.16</div></div>
+  <div class="sc" style="border-left-color:#4472c4"><div class="sl">รวมทั้งหมด (ตัน) ผลิต+อื่นๆ+ซื้อมา</div><div class="sv" id="sa_eK">37,346.58 ตัน</div></div>
+  <div class="sc" style="border-left-color:#3d6b1e"><div class="sl">ส่งแล้ว (บาท) ทั้งหมด</div><div class="sv" id="sa_dB">773,604,624.18</div></div>
+  <div class="sc" style="border-left-color:#8bc34a"><div class="sl">รอส่ง (บาท) ทั้งหมด</div><div class="sv" id="sa_pB">58,402,078.99</div></div>
+  <div class="sc" style="border-left-color:#3d6b1e"><div class="sl">ส่งแล้ว (ตัน) ทั้งหมด</div><div class="sv" id="sa_dK">35,316.42 ตัน</div></div>
+  <div class="sc" style="border-left-color:#8bc34a"><div class="sl">รอส่ง (ตัน) ทั้งหมด</div><div class="sv" id="sa_pK">2,030.16 ตัน</div></div>
+</div>
+<div class="grid">
+
+  <div class="cd fw"><div class="ct">📊 1: ยอดขายสินค้าเทียบเป้าหมาย (บาท)</div><div class="cc tall"><canvas id="c1" style="box-sizing: border-box; display: block; height: 520px; width: 1046px;" width="1046" height="520"></canvas></div></div>
+  <div class="cd fw"><div class="ct">📊 2: ยอดขายสินค้าเทียบเป้าหมาย (ตัน)</div><div class="cc tall"><canvas id="c2" style="box-sizing: border-box; display: block; height: 520px; width: 1046px;" width="1046" height="520"></canvas></div></div>
+  <div class="cd fw"><div class="ct">📊 3a: % กำไรขั้นต้น เทียบเป้าหมาย (กลุ่ม 1)</div><div class="cc tall"><canvas id="c3a" style="box-sizing: border-box; display: block; height: 520px; width: 1046px;" width="1046" height="520"></canvas></div></div>
+  <div class="cd fw"><div class="ct">📊 3b: % กำไรขั้นต้น เทียบเป้าหมาย (กลุ่ม 2)</div><div class="cc tall"><canvas id="c3b" style="box-sizing: border-box; display: block; height: 520px; width: 1046px;" width="1046" height="520"></canvas></div></div>
+  <div class="cd"><div class="ct">📊 4: G3 น้ำมันถั่วเหลือง (บาท)</div><div class="cc"><canvas id="c4" style="box-sizing: border-box; display: block; height: 420px; width: 499px;" width="499" height="420"></canvas></div></div>
+  <div class="cd"><div class="ct">📊 5: G3 น้ำมันถั่วเหลือง (ตัน)</div><div class="cc"><canvas id="c5" style="box-sizing: border-box; display: block; height: 420px; width: 499px;" width="499" height="420"></canvas></div></div>
+  <div class="cd"><div class="ct">📊 7: สัดส่วนยอดขาย — <span id="c7t" style="color:#2e7d32">มูลค่ารวม 832,006,703.16 บาท</span></div><div class="cc"><canvas id="c7" style="box-sizing: border-box; display: block; height: 420px; width: 499px;" width="499" height="420"></canvas></div></div>
+  <div class="cd"><div class="ct">📊 8: สัดส่วนกำไร — <span id="c8t" style="color:#2e7d32">กำไรรวม 92,966,092.23 บาท</span></div><div class="cc"><canvas id="c8" style="box-sizing: border-box; display: block; height: 420px; width: 499px;" width="499" height="420"></canvas></div></div>
+  <!-- Stock Table -->
+  </div>
+</div><!-- /page1 -->
+
+</div><!-- /mainPages -->
+</div>
+
+<style>
+#stockTbl{width:100%;border-collapse:collapse;font-size:12px}
+#stockTbl th{background:var(--green-800);color:#fff;padding:9px 10px;text-align:center;font-weight:700;white-space:nowrap;font-size:11px;letter-spacing:.3px}
+#stockTbl td{padding:7px 10px;border-bottom:1px solid var(--border)}
+#stockTbl tr:nth-child(even){background:rgba(61,107,30,.03)}
+#stockTbl tr:hover{background:rgba(61,107,30,.07)}
+#stockTbl tr.subtotal{background:#edf7e6;font-weight:700}
+#stockTbl tr.subtotal td{border-top:2px solid var(--green-400);border-bottom:2px solid var(--green-400)}
+#stockTbl tr.grp-hdr{background:#f5f0e0;font-weight:700;color:#5d4037}
+#stockTbl tr.grp-hdr td{border-top:2px solid #d4a017;font-style:italic}
+#stockTbl .num{text-align:right;font-variant-numeric:tabular-nums}
+#stockTbl .grp{font-weight:700;color:#2d5016}
+#stockTbl .neg{color:#c62828}
+</style>
+
+<script>
+const FN='Sarabun';
+const F=(n,d=0)=>n==null||isNaN(n)?'-':n.toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});
+const K=n=>{if(n==null||isNaN(n))return'-';const a=Math.abs(n);if(a>=1e6)return(n/1e6).toFixed(1)+'M';if(a>=1e3)return(n/1e3).toFixed(0)+'K';return F(n);};
+const KB=n=>{if(n==null||isNaN(n))return'-';if(Math.abs(n)>=1e6)return F(n/1e6,1)+' ล้านบาท';return F(n/1000,0)+' พันบาท';};
+const P=(a,t)=>t?a/t*100:0;
+const LG=(s=10)=>({position:'bottom',labels:{font:{family:FN,size:s},usePointStyle:true,padding:14}});
+let CX={};function dc(id){if(CX[id]){CX[id].destroy();delete CX[id];}}
+const BP=.65,CP=.72;
+
+// ═══ MASTER DATA — each product with group tag (31/03/69) ═══
+let ALL=/*ALL_START*/[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":8316.59,"tB":220179425.45,"f":28,"dK":4914.04,"dB":129126125.75,"dPB":39948963.07,"ax":31.89,"pK":307.14,"pB":8958193.5,"pPB":2995697.64,"cp":33.44,"eK":5221.179999999999,"eB":138084319.25,"ePB":42944660.71,"ct":32.88,"cw":4.88,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":375,"tB":6591820,"f":18,"dK":285,"dB":5643000,"dPB":1151400,"ax":20.4,"pK":30,"pB":594000,"pPB":121200,"cp":20.4,"eK":315,"eB":6237000,"ePB":1272600,"ct":20.4,"cw":2.4,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":1154.44,"tB":19521648.04,"f":18,"dK":480.5,"dB":8561550,"dPB":1664870,"ax":19.4,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":480.5,"eB":8561550,"ePB":1664870,"ct":19.4,"cw":1.4,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":20989,"tB":317628520,"f":8,"dK":16503.840000000004,"dB":252381626.5,"dPB":12398891.949999997,"ax":4.96,"pK":620.5,"pB":11109050,"pPB":1207770,"cp":10.87,"eK":17124.340000000004,"eB":263490676.5,"ePB":13606661.949999997,"ct":8.77,"cw":0.77,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":3756.16,"tB":55318004.96,"f":8,"dK":2377.7599999999998,"dB":36825639,"dPB":1481435.7,"ax":8.85,"pK":105,"pB":1896000,"pPB":175350,"cp":9.25,"eK":2482.7599999999998,"eB":38721639,"ePB":1656785.7,"ct":9.11,"cw":1.11,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":4176.62,"tB":80396322.39999999,"f":8,"dK":3289.11,"dB":64705694.5,"dPB":4200846.800000001,"ax":3.57,"pK":146.5,"pB":3054900,"pPB":143590,"cp":4.7,"eK":3435.61,"eB":67760594.5,"ePB":4344436.800000001,"ct":4.35,"cw":-3.65,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":4240.38,"tB":182521340,"f":10,"dK":3368.22,"dB":141235415,"dPB":15273561.500000002,"ax":7.72,"pK":464.04,"pB":20796520,"pPB":2299591.6,"cp":11.06,"eK":3832.2599999999998,"eB":162031935,"ePB":17573153.1,"ct":9.88,"cw":-0.12,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":3074.62,"tB":141322221.45,"f":8,"dK":2296.42,"dB":107222900.92999999,"dPB":7223557.82,"ax":10.39,"pK":184.05,"pB":8921364.49,"pPB":424483.66,"cp":4.76,"eK":2480.4700000000003,"eB":116144265.41,"ePB":7648041.470000001,"ct":7.5,"cw":-0.5,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":995.98,"tB":6087816,"f":12,"dK":559.5000000000001,"dB":4191222.5,"dPB":550954,"ax":8.79,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":559.5000000000001,"eB":4191222.5,"ePB":550954,"ct":8.79,"cw":-3.21,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":210.32,"dB":5386257,"dPB":1369705.6,"ax":15.88,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":210.32,"eB":5386257,"ePB":1369705.6,"ct":15.88,"cw":15.88,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":1031.71,"dB":18325193,"dPB":340325.9,"ax":0.58,"pK":172.93,"pB":3072051,"pPB":-6103,"cp":-0.2,"eK":1204.6399999999999,"eB":21397244,"ePB":334222.9,"ct":0.37,"cw":-4.63,"mp":0.0538}]/*ALL_END*/;
+
+// ═══ MONTHLY DATA — store data for multiple months ═══
+let MONTHLY_DATA=/*MONTHLY_START*/{"ม.ค.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":539.6,"tB":13983790,"f":28,"dK":170.29,"dB":4423252.5,"dPB":1347406.3,"ax":30.46,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":170.29,"eB":4423252.5,"ePB":1347406.3,"ct":30.46,"cw":2.46,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":90,"tB":1521900,"f":18,"dK":60,"dB":1026000,"dPB":200400,"ax":19.53,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":60,"eB":1026000,"ePB":200400,"ct":19.53,"cw":1.53,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2200,"tB":32296000,"f":10,"dK":2081.2,"dB":29960189,"dPB":2342149.25,"ax":7.82,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":2081.2,"eB":29960189,"ePB":2342149.25,"ct":7.82,"cw":-2.18,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":128.72,"tB":1889668.32,"f":10,"dK":74.19,"dB":1113200,"dPB":97339.2,"ax":8.74,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":74.19,"eB":1113200,"ePB":97339.2,"ct":8.74,"cw":-1.26,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977641.55,"f":10,"dK":411.18,"dB":7846932,"dPB":835470.9,"ax":10.65,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":411.18,"eB":7846932,"ePB":835470.9,"ct":10.65,"cw":0.65,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":340,"tB":14620000,"f":12,"dK":371.37,"dB":15323320,"dPB":2337987.4,"ax":15.26,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":371.37,"eB":15323320,"ePB":2337987.4,"ct":15.26,"cw":3.26,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":332.05,"tB":15274461,"f":10,"dK":264,"dB":11738014.02,"dPB":1080700.26,"ax":9.21,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":264,"eB":11738014.02,"ePB":1080700.26,"ct":9.21,"cw":-0.79,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":78.66,"tB":471954,"f":12,"dK":45.65,"dB":283350,"dPB":53805.5,"ax":18.99,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":45.65,"eB":283350,"ePB":53805.5,"ct":18.99,"cw":6.99,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":12.34,"dB":317627,"dPB":286777,"ax":90.29,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":12.34,"eB":317627,"ePB":286777,"ct":90.29,"cw":90.29,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":30.6,"dB":563170,"dPB":-18230,"ax":-3.24,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":30.6,"eB":563170,"ePB":-18230,"ct":-3.24,"cw":-8.24,"mp":0.0538}],"stock":[],"totals":{"F":16.64,"Ax":11.91,"Cp":0,"Ct":11.91,"Cw":-4.73}},"ก.พ.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":753.53,"tB":19522639.09,"f":28,"dK":373.78,"dB":9626705,"dPB":2779458,"ax":28.87,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":373.78,"eB":9626705,"ePB":2779458,"ct":28.87,"cw":0.87,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":90,"tB":1521900,"f":18,"dK":60.5,"dB":1034550,"dPB":202070,"ax":19.53,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":60.5,"eB":1034550,"ePB":202070,"ct":19.53,"cw":1.53,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":1700,"tB":24958000,"f":10,"dK":1711.55,"dB":25200641.25,"dPB":2759180.1,"ax":10.95,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":1711.55,"eB":25200641.25,"ePB":2759180.1,"ct":10.95,"cw":0.95,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":628.72,"tB":9289668.32,"f":10,"dK":64.28,"dB":971052,"dPB":91104.2,"ax":9.38,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":64.28,"eB":971052,"ePB":91104.2,"ct":9.38,"cw":-0.62,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977641.55,"f":10,"dK":325.46,"dB":6297329,"dPB":740044,"ax":11.75,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":325.46,"eB":6297329,"ePB":740044,"ct":11.75,"cw":1.75,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":550,"tB":23650000,"f":12,"dK":167.54,"dB":6847670,"dPB":1029207.4,"ax":15.03,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":167.54,"eB":6847670,"ePB":1029207.4,"ct":15.03,"cw":3.03,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":420.17,"tB":19327728,"f":10,"dK":161.11,"dB":7128738.32,"dPB":606297.7,"ax":8.5,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":161.11,"eB":7128738.32,"ePB":606297.7,"ct":8.5,"cw":-1.5,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":78.66,"tB":471954,"f":12,"dK":24.3,"dB":146990,"dPB":23012.5,"ax":15.66,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":24.3,"eB":146990,"ePB":23012.5,"ct":15.66,"cw":3.66,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":13.52,"dB":342598,"dPB":308798,"ax":90.13,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":13.52,"eB":342598,"ePB":308798,"ct":90.13,"cw":90.13,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-5,"mp":0.0538}],"stock":[],"totals":{"F":16.64,"Ax":14.83,"Cp":0,"Ct":14.83,"Cw":-1.81}},"มี.ค.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":784.53,"tB":20328639.09,"f":28,"dK":612.18,"dB":16052720,"dPB":4857508.7,"ax":30.26,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":612.18,"eB":16052720,"ePB":4857508.7,"ct":30.26,"cw":2.26,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":120,"tB":2029200,"f":18,"dK":75,"dB":1299750,"dPB":253500,"ax":19.5,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":75,"eB":1299750,"ePB":253500,"ct":19.5,"cw":1.5,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":1700,"tB":24956000,"f":10,"dK":2151.28,"dB":31336904,"dPB":2533181.6,"ax":8.08,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":2151.28,"eB":31336904,"ePB":2533181.6,"ct":8.08,"cw":-1.92,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":628.72,"tB":9289668.32,"f":10,"dK":548.72,"dB":8170890,"dPB":646427.3,"ax":7.91,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":548.72,"eB":8170890,"ePB":646427.3,"ct":7.91,"cw":-2.09,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977641.55,"f":10,"dK":517.52,"dB":9973033,"dPB":1058287,"ax":10.61,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":517.52,"eB":9973033,"ePB":1058287,"ct":10.61,"cw":0.61,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":450,"tB":19350000,"f":12,"dK":471.98,"dB":19383430,"dPB":2714192.5,"ax":14,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":471.98,"eB":19383430,"ePB":2714192.5,"ct":14,"cw":2,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":384.48,"tB":17686218,"f":10,"dK":334.95,"dB":14904691.59,"dPB":1231157.72,"ax":8.26,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":334.95,"eB":14904691.59,"ePB":1231157.72,"ct":8.26,"cw":-1.74,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":78.66,"tB":471954,"f":12,"dK":50.85,"dB":321237.5,"dPB":45089.5,"ax":14.04,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":50.85,"eB":321237.5,"ePB":45089.5,"ct":14.04,"cw":2.04,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":17.7,"dB":452734,"dPB":104858.4,"ax":23.16,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":17.7,"eB":452734,"ePB":104858.4,"ct":23.16,"cw":23.16,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":56.45,"dB":1101315,"dPB":59812.5,"ax":5.43,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":56.45,"eB":1101315,"ePB":59812.5,"ct":5.43,"cw":0.43,"mp":0.0538}],"stock":[],"totals":{"F":16.64,"Ax":13.19,"Cp":0,"Ct":13.19,"Cw":-3.45}},"เม.ย.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":1242.31,"tB":32230919.09,"f":28,"dK":609.87,"dB":16037031.75,"dPB":5050430.27,"ax":31.49,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":609.87,"eB":16037031.75,"ePB":5050430.27,"ct":31.49,"cw":3.49,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":367.22,"tB":6209724.02,"f":18,"dK":90,"dB":1642500,"dPB":318600,"ax":19.4,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":90,"eB":1642500,"ePB":318600,"ct":19.4,"cw":1.4,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":1863,"tB":27348840,"f":10,"dK":1649.69,"dB":25360814,"dPB":1907805.4,"ax":7.52,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":1649.69,"eB":25360814,"ePB":1907805.4,"ct":7.52,"cw":-2.48,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":700,"tB":10336000,"f":10,"dK":600.08,"dB":9002511,"dPB":725522.3,"ax":8.06,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":600.08,"eB":9002511,"ePB":725522.3,"ct":8.06,"cw":-1.94,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977641.55,"f":10,"dK":238.43,"dB":4572085,"dPB":427650,"ax":9.35,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":238.43,"eB":4572085,"ePB":427650,"ct":9.35,"cw":-0.65,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":400,"tB":17200000,"f":12,"dK":520.67,"dB":21699987.5,"dPB":2968346.5,"ax":13.68,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":520.67,"eB":21699987.5,"ePB":2968346.5,"ct":13.68,"cw":1.68,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":347.79,"tB":15998409,"f":10,"dK":219.87,"dB":10124313.08,"dPB":664600.92,"ax":6.56,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":219.87,"eB":10124313.08,"ePB":664600.92,"ct":6.56,"cw":-3.44,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":100,"tB":600000,"f":12,"dK":87.85,"dB":625260,"dPB":114103.5,"ax":18.25,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":87.85,"eB":625260,"ePB":114103.5,"ct":18.25,"cw":6.25,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":10.46,"dB":268822,"dPB":42676.8,"ax":15.88,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":10.46,"eB":268822,"ePB":42676.8,"ct":15.88,"cw":15.88,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":185.3,"dB":3646580,"dPB":70290,"ax":1.93,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":185.3,"eB":3646580,"ePB":70290,"ct":1.93,"cw":-3.07,"mp":0.0538}],"stock":[],"totals":{"F":16.64,"Ax":13.68,"Cp":0,"Ct":13.68,"Cw":-2.96}},"พ.ค.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":1242.31,"tB":32230919.09,"f":28,"dK":637.31,"dB":14923782.5,"dPB":4675447,"ax":31.33,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":637.31,"eB":14923782.5,"ePB":4675447,"ct":31.33,"cw":3.33,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":367.22,"tB":6209724.02,"f":18,"dK":120,"dB":2190000,"dPB":424800,"ax":19.4,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":120,"eB":2190000,"ePB":424800,"ct":19.4,"cw":1.4,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2063,"tB":30284840,"f":10,"dK":917.04,"dB":14524209,"dPB":540345.9,"ax":3.72,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":917.04,"eB":14524209,"ePB":540345.9,"ct":3.72,"cw":-6.28,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":200,"tB":2936000,"f":10,"dK":74.67,"dB":1233690,"dPB":75870.7,"ax":6.15,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":74.67,"eB":1233690,"ePB":75870.7,"ct":6.15,"cw":-3.85,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977641.55,"f":10,"dK":292.28,"dB":5882700,"dPB":320587.6,"ax":5.45,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":292.28,"eB":5882700,"ePB":320587.6,"ct":5.45,"cw":-4.55,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":450,"tB":19350000,"f":12,"dK":496.71,"dB":21191185,"dPB":2157224.8,"ax":10.18,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":496.71,"eB":21191185,"ePB":2157224.8,"ct":10.18,"cw":-1.82,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":453.52,"tB":20862118.95,"f":10,"dK":311.04,"dB":14737233.64,"dPB":915093.32,"ax":6.21,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":311.04,"eB":14737233.64,"ePB":915093.32,"ct":6.21,"cw":-3.79,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":100,"tB":600000,"f":12,"dK":70.9,"dB":544180,"dPB":67643,"ax":12.43,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":70.9,"eB":544180,"ePB":67643,"ct":12.43,"cw":0.43,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":16.6,"dB":426620,"dPB":67728,"ax":15.88,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":16.6,"eB":426620,"ePB":67728,"ct":15.88,"cw":15.88,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":310.19,"dB":4971799,"dPB":181500.4,"ax":3.65,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":310.19,"eB":4971799,"ePB":181500.4,"ct":3.65,"cw":-1.35,"mp":0.0538}],"stock":[],"totals":{"F":16.64,"Ax":12.22,"Cp":0,"Ct":12.22,"Cw":-4.42}},"มิ.ย.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":1242.31,"tB":32230919.09,"f":28,"dK":656.32,"dB":16836290,"dPB":5261255,"ax":31.25,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":656.32,"eB":16836290,"ePB":5261255,"ct":31.25,"cw":3.25,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":120,"tB":2029200,"f":18,"dK":75,"dB":1368750,"dPB":265500,"ax":19.4,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":75,"eB":1368750,"ePB":265500,"ct":19.4,"cw":1.4,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2063,"tB":30284840,"f":10,"dK":1504.79,"dB":23599358.25,"dPB":805370.7,"ax":3.41,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":1504.79,"eB":23599358.25,"ePB":805370.7,"ct":3.41,"cw":-6.59,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":200,"tB":2936000,"f":10,"dK":45.11,"dB":749201,"dPB":31438.3,"ax":4.2,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":45.11,"eB":749201,"ePB":31438.3,"ct":4.2,"cw":-5.8,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977641.55,"f":10,"dK":420.68,"dB":8437752,"dPB":442952.1,"ax":5.25,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":420.68,"eB":8437752,"ePB":442952.1,"ct":5.25,"cw":-4.75,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":500.38,"tB":21516340,"f":12,"dK":241.33,"dB":10258915,"dPB":897010.4,"ax":8.74,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":241.33,"eB":10258915,"ePB":897010.4,"ct":8.74,"cw":-3.26,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":269.01,"tB":12374460,"f":10,"dK":264.48,"dB":12562345.79,"dPB":662782.86,"ax":5.28,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":264.48,"eB":12562345.79,"ePB":662782.86,"ct":5.28,"cw":-4.72,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":100,"tB":600000,"f":12,"dK":66.4,"dB":525020,"dPB":61713,"ax":11.75,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":66.4,"eB":525020,"ePB":61713,"ct":11.75,"cw":-0.25,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":15.84,"dB":407088,"dPB":64627.2,"ax":15.88,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":15.84,"eB":407088,"ePB":64627.2,"ct":15.88,"cw":15.88,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":0.1,"dB":2100,"dPB":170,"ax":8.1,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0.1,"eB":2100,"ePB":170,"ct":8.1,"cw":3.1,"mp":0.0538}],"stock":[],"totals":{"F":15.58,"Ax":11.36,"Cp":0,"Ct":11.36,"Cw":-4.22}},"ก.ค.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":604,"tB":15704000,"f":28,"dK":587.06,"dB":15655375,"dPB":4892079.3,"ax":31.25,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":587.06,"eB":15655375,"ePB":4892079.3,"ct":31.25,"cw":3.25,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":90,"tB":1521900,"f":18,"dK":90,"dB":1782000,"dPB":363600,"ax":20.4,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":90,"eB":1782000,"ePB":363600,"ct":20.4,"cw":2.4,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2500,"tB":36700000,"f":8,"dK":1783.1,"dB":27402537,"dPB":211583.1,"ax":0.77,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":1783.1,"eB":27402537,"ePB":211583.1,"ct":0.77,"cw":-7.23,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":250,"tB":3670000,"f":8,"dK":97.75,"dB":1555853,"dPB":-2629.7,"ax":-0.17,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":97.75,"eB":1555853,"ePB":-2629.7,"ct":-0.17,"cw":-8.17,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419,"tB":7965190,"f":8,"dK":348.49,"dB":6912338,"dPB":199615.4,"ax":2.89,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":348.49,"eB":6912338,"ePB":199615.4,"ct":2.89,"cw":-5.11,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":500,"tB":21500000,"f":8,"dK":392.44,"dB":16532510,"dPB":1207042.8,"ax":7.3,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":392.44,"eB":16532510,"ePB":1207042.8,"ct":7.3,"cw":-0.7,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":285.62,"tB":13138393.5,"f":7.5,"dK":263.12,"dB":12496886.92,"dPB":592398.44,"ax":4.74,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":263.12,"eB":12496886.92,"ePB":592398.44,"ct":4.74,"cw":-2.76,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":120,"tB":720000,"f":12,"dK":87.55,"dB":705655,"dPB":71105,"ax":10.08,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":87.55,"eB":705655,"ePB":71105,"ct":10.08,"cw":-1.92,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":17.35,"dB":445895,"dPB":70815.6,"ax":15.88,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":17.35,"eB":445895,"ePB":70815.6,"ct":15.88,"cw":15.88,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-5,"mp":0.0538}],"stock":[],"totals":{"F":11.48,"Ax":9.11,"Cp":0,"Ct":9.11,"Cw":-2.37}},"ส.ค.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":670,"tB":17420000,"f":28,"dK":513.38,"dB":14249582,"dPB":4384482.8,"ax":30.77,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":513.38,"eB":14249582,"ePB":4384482.8,"ct":30.77,"cw":2.77,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":90,"tB":1521900,"f":18,"dK":90,"dB":1782000,"dPB":363600,"ax":20.4,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":90,"eB":1782000,"ePB":363600,"ct":20.4,"cw":2.4,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2500,"tB":36700000,"f":8,"dK":2371.3,"dB":37252446,"dPB":103910.6,"ax":0.28,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":2371.3,"eB":37252446,"ePB":103910.6,"ct":0.28,"cw":-7.72,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":250,"tB":3670000,"f":8,"dK":236.44,"dB":3703096.5,"dPB":-136150.25,"ax":-3.68,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":236.44,"eB":3703096.5,"ePB":-136150.25,"ct":-3.68,"cw":-11.68,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977641.55,"f":8,"dK":333.26,"dB":6628592,"dPB":18089.6,"ax":0.27,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":333.26,"eB":6628592,"ePB":18089.6,"ct":0.27,"cw":-7.73,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":392,"tB":16856000,"f":8,"dK":410.99,"dB":17339235,"dPB":991055,"ax":5.72,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":410.99,"eB":17339235,"ePB":991055,"ct":5.72,"cw":-2.28,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":230,"tB":10580000,"f":7.5,"dK":259.52,"dB":12446658.88,"dPB":490459.56,"ax":3.94,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":259.52,"eB":12446658.88,"ePB":490459.56,"ct":3.94,"cw":-3.56,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":120,"tB":720000,"f":12,"dK":57.25,"dB":465025,"dPB":64275,"ax":13.82,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":57.25,"eB":465025,"ePB":64275,"ct":13.82,"cw":1.82,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":56.26,"dB":1439432,"dPB":223763.2,"ax":15.55,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":56.26,"eB":1439432,"ePB":223763.2,"ct":15.55,"cw":15.55,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-5,"mp":0.0538}],"stock":[],"totals":{"F":11.48,"Ax":6.82,"Cp":0,"Ct":6.82,"Cw":-4.66}},"ก.ย.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":706,"tB":19604000,"f":28,"dK":566.25,"dB":16228937,"dPB":5076763.7,"ax":31.28,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":566.25,"eB":16228937,"ePB":5076763.7,"ct":31.28,"cw":3.28,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":120,"tB":2063020,"f":18,"dK":60,"dB":1188000,"dPB":242400,"ax":20.4,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":60,"eB":1188000,"ePB":242400,"ct":20.4,"cw":2.4,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2200,"tB":36700000,"f":8,"dK":1963.14,"dB":31615930,"dPB":891098.7,"ax":2.82,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":1963.14,"eB":31615930,"ePB":891098.7,"ct":2.82,"cw":-5.18,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":500,"tB":6630000,"f":8,"dK":579.9,"dB":9304581.5,"dPB":-137894.55,"ax":-1.48,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":579.9,"eB":9304581.5,"ePB":-137894.55,"ct":-1.48,"cw":-9.48,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":400,"tB":7977641.55,"f":8,"dK":334.91,"dB":6771673.5,"dPB":108726.2,"ax":1.61,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":334.91,"eB":6771673.5,"ePB":108726.2,"ct":1.61,"cw":-6.39,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":288,"tB":12384000,"f":8,"dK":29.34,"dB":1234440,"dPB":89080.2,"ax":7.22,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":29.34,"eB":1234440,"ePB":89080.2,"ct":7.22,"cw":-0.78,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":137.07,"tB":6302000,"f":7.5,"dK":54.92,"dB":2636102.8,"dPB":102215.84,"ax":3.88,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":54.92,"eB":2636102.8,"ePB":102215.84,"ct":3.88,"cw":-3.62,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":100,"tB":471954,"f":12,"dK":49.05,"dB":409855,"dPB":35732,"ax":8.72,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":49.05,"eB":409855,"ePB":35732,"ct":8.72,"cw":-3.28,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":46.64,"dB":1192664,"dPB":184932.6,"ax":15.51,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":46.64,"eB":1192664,"ePB":184932.6,"ct":15.51,"cw":15.51,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-5,"mp":0.0538}],"stock":[],"totals":{"F":11.48,"Ax":9.34,"Cp":0,"Ct":9.34,"Cw":-2.14}},"ต.ค.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":532,"tB":16923600,"f":28,"dK":187.6,"dB":5092450,"dPB":1624132,"ax":31.89,"pK":307.14,"pB":8958193.5,"pPB":2995697.64,"cp":33.44,"eK":494.74,"eB":14050643.5,"ePB":4619829.64,"ct":32.88,"cw":4.88,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":75,"tB":1485000,"f":18,"dK":45,"dB":891000,"dPB":181800,"ax":20.4,"pK":30,"pB":594000,"pPB":121200,"cp":20.4,"eK":75,"eB":1485000,"ePB":303000,"ct":20.4,"cw":2.4,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2200,"tB":37400000,"f":8,"dK":370.75,"dB":6128598,"dPB":304266.6,"ax":4.96,"pK":620.5,"pB":11109050,"pPB":1207770,"cp":10.87,"eK":991.25,"eB":17237648,"ePB":1512036.6,"ct":8.77,"cw":0.77,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":270,"tB":4671000,"f":8,"dK":56.62,"dB":1021564,"dPB":90408.2,"ax":8.85,"pK":105,"pB":1896000,"pPB":175350,"cp":9.25,"eK":161.62,"eB":2917564,"ePB":265758.2,"ct":9.11,"cw":1.11,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":420,"tB":8610000,"f":8,"dK":66.9,"dB":1383260,"dPB":49424,"ax":3.57,"pK":146.5,"pB":3054900,"pPB":143590,"cp":4.7,"eK":213.4,"eB":4438160,"ePB":193014,"ct":4.35,"cw":-3.65,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":370,"tB":16095000,"f":10,"dK":265.85,"dB":11424722.5,"dPB":882414.5,"ax":7.72,"pK":464.04,"pB":20796520,"pPB":2299591.6,"cp":11.06,"eK":729.89,"eB":32221242.5,"ePB":3182006.1,"ct":9.88,"cw":-0.12,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":214.91,"tB":9778433,"f":8,"dK":163.41,"dB":8447915.89,"dPB":877851.2,"ax":10.39,"pK":184.05,"pB":8921364.49,"pPB":424483.66,"cp":4.76,"eK":347.46,"eB":17369280.37,"ePB":1302334.85,"ct":7.5,"cw":-0.5,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":120,"tB":960000,"f":12,"dK":19.7,"dB":164650,"dPB":14475,"ax":8.79,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":19.7,"eB":164650,"ePB":14475,"ct":8.79,"cw":-3.21,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":3.61,"dB":92777,"dPB":14728.8,"ax":15.88,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":3.61,"eB":92777,"ePB":14728.8,"ct":15.88,"cw":15.88,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":449.07,"dB":8040229,"dPB":46783,"ax":0.58,"pK":172.93,"pB":3072051,"pPB":-6103,"cp":-0.2,"eK":622,"eB":11112280,"ePB":40680,"ct":0.37,"cw":-4.63,"mp":0.0538}],"stock":[],"totals":{"F":12.1,"Ax":11.66,"Cp":13.32,"Ct":12.68,"Cw":0.58}},"พ.ย.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":1124,"tB":28857520,"f":28,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-28,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":90,"tB":1521900,"f":19,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-19,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2592.23,"tB":38053936.4,"f":10,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-10,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":270,"tB":3963600,"f":10,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-10,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977736.6,"f":10,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-10,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":750,"tB":32250000,"f":13,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-13,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":353.06,"tB":16240760,"f":11,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-11,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":150,"tB":900000,"f":12,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-12,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-5,"mp":0.0538}],"stock":[],"totals":{"F":15.25,"Ax":0,"Cp":0,"Ct":0,"Cw":0}},"ธ.ค.":{"all":[{"id":"LCD1","grp":"G1","l":"LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)","tK":1424,"tB":36657520,"f":28,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-28,"mp":0.307},{"id":"LCD1g","grp":"G1g","l":"LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":120,"tB":2029200,"f":19,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-19,"mp":0.307},{"id":"LCD2c","grp":"G2+","l":"LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.1953},{"id":"LCD2m","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 44%","tK":2592.23,"tB":38053936.4,"f":10,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-10,"mp":0.0823},{"id":"LCD2m46","grp":"G2","l":"LCD2 กากถั่วเหลือง โปรตีน 46%","tK":270,"tB":3963600,"f":10,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-10,"mp":0.0823},{"id":"LCD4","grp":"G2","l":"LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม","tK":419.66,"tB":7977736.6,"f":10,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-10,"mp":0.0823},{"id":"LCD5","grp":"G3","l":"LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง","tK":800,"tB":34400000,"f":13,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-13,"mp":0.1119},{"id":"LCD6","grp":"G3","l":"LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์","tK":353.06,"tB":16240760,"f":11,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-11,"mp":0.1119},{"id":"LCD3","grp":"other","l":"LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง","tK":150,"tB":900000,"f":12,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-12,"mp":0.1359},{"id":"LCD7","grp":"other","l":"LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง","tK":0,"tB":0,"f":0,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":0,"mp":0.2828},{"id":"resale","grp":"resale","l":"สินค้าซื้อมาขาย","tK":0,"tB":0,"f":5,"dK":0,"dB":0,"dPB":0,"ax":0,"pK":0,"pB":0,"pPB":0,"cp":0,"eK":0,"eB":0,"ePB":0,"ct":0,"cw":-5,"mp":0.0538}],"stock":[],"totals":{"F":15.25,"Ax":0,"Cp":0,"Ct":0,"Cw":0}}}/*MONTHLY_END*/;
+let currentMonth='';
+
+// ═══ FILTER LOGIC ═══
+function getFiltered(){
+  const grps=new Set([...document.querySelectorAll('.fg:checked')].map(c=>c.value));
+  const prods=new Set([...document.querySelectorAll('.fp:checked')].map(c=>c.value));
+  return ALL.filter(p=>grps.has(p.grp)&&prods.has(p.id));
+}
+function toggleDrop(id){document.querySelectorAll('.fgroup-drop').forEach(d=>{if(d.id!==id)d.classList.remove('show');});document.getElementById(id).classList.toggle('show');}
+function toggleAll(cls){const ch=document.getElementById(cls+'All').checked;document.querySelectorAll('.'+cls).forEach(c=>c.checked=ch);updBtn(cls);renderAll();}
+function updBtn(cls){
+  const a=document.querySelectorAll('.'+cls),c=[...a].filter(x=>x.checked),btn=document.getElementById(cls==='fg'?'fgBtn':'fpBtn'),lbl=cls==='fg'?'กลุ่ม':'สินค้า';
+  if(c.length===a.length) btn.innerHTML=lbl+'ทั้งหมด <span class="badge">'+a.length+'/'+a.length+'</span> ▾';
+  else if(c.length===0) btn.innerHTML='ไม่ได้เลือก'+lbl+' <span class="badge" style="background:#c62828">0/'+a.length+'</span> ▾';
+  else btn.innerHTML=lbl+' <span class="badge">'+c.length+'/'+a.length+'</span> ▾';
+}
+// Auto-render on every checkbox change
+document.querySelectorAll('.fg').forEach(c=>c.addEventListener('change',()=>{const a=document.querySelectorAll('.fg');document.getElementById('fgAll').checked=[...a].every(x=>x.checked);updBtn('fg');renderAll();}));
+document.querySelectorAll('.fp').forEach(c=>c.addEventListener('change',()=>{const a=document.querySelectorAll('.fp');document.getElementById('fpAll').checked=[...a].every(x=>x.checked);updBtn('fp');renderAll();}));
+document.addEventListener('click',e=>{if(!e.target.closest('.fgroup'))document.querySelectorAll('.fgroup-drop').forEach(d=>d.classList.remove('show'));});
+function applyFilter(){renderAll();}
+function resetFilter(){document.querySelectorAll('.fg,.fp,.fall input').forEach(c=>c.checked=true);updBtn('fg');updBtn('fp');renderAll();}
+
+// ═══ MODAL ═══
+const modal=document.getElementById('modal'),dz=document.getElementById('dz'),fi=document.getElementById('fi');
+let uF=[];
+document.getElementById('btnOpen').onclick=()=>modal.classList.add('show');
+document.getElementById('btnClose').onclick=()=>modal.classList.remove('show');
+modal.onclick=e=>{if(e.target===modal)modal.classList.remove('show');};
+dz.onclick=()=>fi.click();
+fi.onchange=e=>{if(e.target.files[0])readF(e.target.files[0]);e.target.value='';};
+dz.addEventListener('dragenter',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',e=>{e.preventDefault();dz.classList.remove('over');});
+dz.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';});
+dz.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();dz.classList.remove('over');for(const f of e.dataTransfer.files)readF(f);});
+let _d=0;document.addEventListener('dragenter',e=>{e.preventDefault();_d++;if(_d===1)modal.classList.add('show');});document.addEventListener('dragleave',e=>{e.preventDefault();_d--;if(_d<=0)_d=0;});document.addEventListener('dragover',e=>e.preventDefault());document.addEventListener('drop',e=>{e.preventDefault();_d=0;});
+function readF(file){
+  const nm=file.name, sz=(file.size/1024).toFixed(0)+' KB';
+  const statusEl=document.getElementById('mStatus');
+  const viewBtn=document.getElementById('mViewBtn');
+  statusEl.style.display='block';
+  statusEl.style.background='#fff3cd';statusEl.style.color='#856404';
+  statusEl.innerHTML='⏳ กำลังอ่านไฟล์ <b>'+nm+'</b> ...';
+  viewBtn.style.display='none';
+
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const sheets=wb.SheetNames;
+      const g=(row,c)=>{if(!row||c>=row.length)return 0;const v=row[c];if(v==null||v==='')return 0;const n=Number(v);return isNaN(n)?0:n;};
+      const r2=v=>Math.round(v*100)/100;
+      const pct=v=>{if(v===0)return 0;return Math.abs(v)<1?Math.round(v*10000)/100:Math.round(v*100)/100;};
+
+      // ── Find all sales sheets and detect month names ──
+      const THAI_MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+      const salesSheets=[];
+      sheets.forEach(sn=>{
+        if(sn.includes('รวมส่งแล้ว')){
+          let mon='';
+          for(const m of THAI_MONTHS){if(sn.includes(m)){mon=m;break;}}
+          salesSheets.push({name:sn,month:mon});
+        }
+      });
+      
+      // If no month detected, treat as single-month file
+      const isMultiMonth=salesSheets.length>1||salesSheets.some(s=>s.month);
+      
+      // ── Parse a single month's sales sheet ──
+      function parseMonthSheet(sheetName){
+        const ws1=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:null});
+        
+        function findGroupCol(keyword){
+          for(let ri=0;ri<Math.min(5,ws1.length);ri++){
+            const hdr=ws1[ri]||[];
+            for(let i=0;i<hdr.length;i++){
+              const v=hdr[i];
+              if(v&&typeof v==='string'&&v.trim().includes(keyword))return i;
+            }
+          }
+          return -1;
+        }
+        const T=findGroupCol('เป้าหมาย');
+        const D=findGroupCol('ยอดขายส่งมอบ');
+        const Pd=findGroupCol('ยอดขายรอส่งมอบ');
+        const E=findGroupCol('ยอดขาย + คาดว่าจะส่ง');
+        const Df=findGroupCol('ยอดขาย เทียบเป้าหมาย');
+        
+        if(T<0||D<0||E<0){return null;}
+        
+        const nz=v=>(typeof v==='string'?v.replace(/\s+/g,'').trim().toLowerCase():'');
+        const findRows=(kws)=>{
+          const list=Array.isArray(kws)?kws:[kws];
+          const out=[];
+          for(let i=0;i<ws1.length;i++){
+            const c=nz(ws1[i]&&ws1[i][2]);
+            if(!c)continue;
+            if(list.some(k=>c.includes(nz(k))))out.push(i);
+          }
+          return out;
+        };
+        const findByName=(kw)=>{const r=findRows(kw);return r.length?r[0]:-1;};
+        
+        const rowMap=[
+          {id:'LCD1',search:'LCD1 Defatted',grp:'G1',l:'LCD1 Defatted Soybean NON GMOs Protein 48% / 46% (Fine/Flakes)',mp:.307},
+          {id:'LCD1g',search:['LCD1 ถั่วเหลืองสกัดไขมัน','LCD1 Defatted Soybean Protein 45'],grp:'G1g',l:'LCD1 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)',mp:.307},
+          {id:'LCD2c',search:['LCD2 ถั่วเหลืองสกัดไขมัน','LCD2 Defatted Soybean Protein 45'],grp:'G2+',l:'LCD2 ถั่วเหลืองสกัดไขมัน โปรตีน 45% / 46% (Flakes)',mp:.1953},
+          {id:'LCD2m',search:['LCD2 กากถั่วเหลือง โปรตีน 44','LCD2 Soybean Meal Protein 44','LCD2 กากถั่วเหลือง โปรตีน 44% / 46%'],grp:'G2',l:'LCD2 กากถั่วเหลือง โปรตีน 44%',mp:.0823},
+          {id:'LCD2m46',search:['LCD2 กากถั่วเหลือง โปรตีน 46','LCD2 Soybean Meal Protein 46'],grp:'G2',l:'LCD2 กากถั่วเหลือง โปรตีน 46%',mp:.0823},
+          {id:'LCD4',search:'LCD4',grp:'G2',l:'LCD4 Full Fat Soy/ถั่วเหลืองอบไขมันเต็ม',mp:.0823},
+          {id:'LCD5',search:'LCD5',grp:'G3',l:'LCD5 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) แทงค์/ถัง',mp:.1119},
+          {id:'LCD6',search:'LCD6',grp:'G3',l:'LCD6 น้ำมันถั่วเหลืองบริสุทธิ์ (R.B.D) บรรจุภัณฑ์',mp:.1119},
+          {id:'LCD3',search:'LCD3',grp:'other',l:'LCD3 Hull Pelletized/ผิวถั่วเหลืองอัดแท่ง',mp:.1359},
+          {id:'LCD7',search:'LCD7',grp:'other',l:'LCD7 Soybean acid oil/กรดน้ำมันถั่วเหลือง',mp:.2828},
+          {id:'resale',search:'สินค้าซื้อมาขาย',grp:'resale',l:'สินค้าซื้อมาขาย',mp:.0538},
+        ];
+        
+        const all=[];
+        rowMap.forEach(rm=>{
+          const ris=findRows(rm.search);
+          if(!ris.length)return;
+          const S=c=>ris.reduce((a,i)=>a+g(ws1[i],c),0);
+          const rat=(m,b)=>b?r2(m/b*100):0;
+          const tB=S(T+1);
+          let fn=0,fd=0;
+          ris.forEach(i=>{const b=g(ws1[i],T+1);fn+=pct(g(ws1[i],T+2))*b;fd+=b;});
+          const f=fd?r2(fn/fd):(ris.length===1?pct(g(ws1[ris[0]],T+2)):0);
+          const dB=S(D+1),dPB=S(D+2),pB=S(Pd+1),pPB=S(Pd+2),eB=S(E+1),ePB=S(E+2);
+          const ct=rat(ePB,eB);
+          all.push({
+            id:rm.id,grp:rm.grp,l:rm.l,
+            tK:r2(S(T)/1000),tB:r2(tB),f:f,
+            dK:r2(S(D)/1000),dB:r2(dB),dPB:r2(dPB),ax:rat(dPB,dB),
+            pK:r2(S(Pd)/1000),pB:r2(pB),pPB:r2(pPB),cp:rat(pPB,pB),
+            eK:r2(S(E)/1000),eB:r2(eB),ePB:r2(ePB),ct:ct,
+            cw:r2(ct-f),mp:rm.mp,
+          });
+        });
+        
+        // Total row
+        let totalRow=-1;
+        for(let i=ws1.length-1;i>=0;i--){
+          const c=ws1[i]&&ws1[i][2];
+          if(c&&typeof c==='string'&&c.includes('ผลรวมทั้งหมด G1-G3')){totalRow=i;break;}
+        }
+        const totals={F:0,Ax:0,Cp:0,Ct:0,Cw:0};
+        if(totalRow>=0){
+          const tr=ws1[totalRow];
+          totals.F=pct(g(tr,T+2));
+          totals.Ax=pct(g(tr,D+3));
+          totals.Cp=pct(g(tr,Pd+3));
+          totals.Ct=pct(g(tr,E+3));
+          totals.Cw=pct(g(tr,Df+2));
+        }
+        
+        return {all:all,totals:totals};
+      }
+      
+      // ── Parse a stock sheet with dynamic column detection ──
+      function parseStockSheet(sheetName){
+        const ws2=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:null});
+        const newStock=[];
+        
+        // Find header row and detect column positions dynamically
+        let hdrRow=-1;
+        const colMap={};
+        for(let i=0;i<Math.min(8,ws2.length);i++){
+          const r=ws2[i]||[];
+          for(let j=0;j<r.length;j++){
+            const v=r[j];
+            if(!v||typeof v!=='string')continue;
+            const vs=v.trim();
+            if(vs.includes('กลุ่มสินค้า')){colMap.grp=j;hdrRow=i;}
+            else if(vs.includes('ประเภทของสินค้า'))colMap.lcd=j;
+            else if(vs.includes('PAS')&&vs.includes('สต๊อก'))colMap.pas=j;
+            else if(vs.includes('APF')&&vs.includes('สต๊อก'))colMap.apf=j;
+            else if(vs.includes('สต๊อกรวม')||vs.includes('รวมตามระบบ'))colMap.tot=j;
+            else if(vs.includes('จำนวนผลิต'))colMap.prod=j;
+            else if(vs.includes('ออเดอร์'))colMap.ord=j;
+            else if(vs.includes('คงเหลือขาย'))colMap.rem=j;
+            else if(vs.includes('ราคาประมาณ'))colMap.price=j;
+            else if(vs.includes('มูลค่าประมาณ'))colMap.val=j;
+          }
+        }
+        if(hdrRow<0)return [];
+        
+        // Name column = lcd col + 1 (if found) or col 2
+        const nameCol=(colMap.lcd!==undefined?colMap.lcd+1:2);
+        
+        for(let i=hdrRow+1;i<ws2.length;i++){
+          const r=ws2[i];
+          if(!r)continue;
+          const nm=r[nameCol]&&typeof r[nameCol]==='string'?r[nameCol].trim():'';
+          if(!nm||nm.length<3)continue;
+          if(nm.match(/^\d+(\.\d+)?\s*ลิตร$/)||nm==='รวม (ตัน)'||nm==='ขนาด')continue;
+          
+          let typ='dat';
+          if(nm.includes('ก่อนร่อน'))typ='pre';
+          else if(nm.includes('ยอดคงเหลือ'))typ='sub';
+          
+          const grpLabel=r[colMap.grp]&&typeof r[colMap.grp]==='string'?r[colMap.grp].trim():'';
+          const lcd=r[colMap.lcd]&&typeof r[colMap.lcd]==='string'?r[colMap.lcd].trim():'';
+          
+          const _pas=g(r,colMap.pas),_apf=g(r,colMap.apf);
+          const _totRaw=g(r,colMap.tot);
+          const _tot=(_totRaw!=null&&_totRaw!==0)?_totRaw:((_pas||0)+(_apf||0))||null;
+          newStock.push({
+            t:typ,g:grpLabel.substring(0,15),lcd:lcd,n:nm.length>60?nm.substring(0,60):nm,
+            pas:_pas,apf:_apf,tot:_tot,
+            prod:g(r,colMap.prod),ord:g(r,colMap.ord),rem:g(r,colMap.rem),
+            price:g(r,colMap.price),val:g(r,colMap.val)
+          });
+        }
+        return newStock;
+      }
+      
+      // ── Parse all months ──
+      const newMonthly={};
+      const details=[];
+      let parsedCount=0;
+      
+      salesSheets.forEach(ss=>{
+        const monthKey=ss.month||'unnamed';
+        const parsed=parseMonthSheet(ss.name);
+        if(!parsed)return;
+        
+        // Find matching stock sheet for this month
+        let stockSheet=null;
+        if(ss.month){
+          stockSheet=sheets.find(s=>s.includes('สต๊อก')&&s.includes(ss.month));
+        }else{
+          stockSheet=sheets.find(s=>s.includes('สต๊อก'));
+        }
+        
+        const stock=stockSheet?parseStockSheet(stockSheet):[];
+        
+        newMonthly[monthKey]={
+          all:parsed.all,
+          stock:stock,
+          totals:parsed.totals,
+        };
+        parsedCount++;
+        
+        const prodItems=parsed.all.filter(a=>a.grp!=='resale');
+        const sumEB=prodItems.reduce((s,a)=>s+a.eB,0);
+        const icon=sumEB>0?'✅':'⏳';
+        details.push(icon+' '+monthKey+': '+parsed.all.length+' items, stock='+stock.length+', ยอดขาย='+F(sumEB,0));
+      });
+      
+      if(parsedCount===0){
+        throw new Error('ไม่พบ sheet ยอดขาย (ต้องมีชื่อขึ้นต้นด้วย "รวมส่งแล้ว")');
+      }
+      
+      // Replace MONTHLY_DATA entirely
+      Object.keys(MONTHLY_DATA).forEach(k=>delete MONTHLY_DATA[k]);
+      Object.keys(newMonthly).forEach(k=>{MONTHLY_DATA[k]=newMonthly[k];});
+      
+      // Populate dropdown and select latest month with data
+      currentMonth='';
+      populateMonthDropdown();
+      
+      // Load current month's data into ALL/STOCK and render
+      switchMonth();
+      
+      uF.push({name:nm,size:sz,sheets:sheets.length,rows:parsedCount+' เดือน'});rTags();
+      
+      // Update header: period from filename + upload date
+      const periodName=nm.replace(/\.(xlsx|xls|csv)$/i,'').replace(/_/g,' ');
+      document.getElementById('hdPeriod').textContent='📅 ไฟล์: '+periodName+' ('+parsedCount+' เดือน)';
+      const now=new Date();
+      const thaiDate=now.getDate()+'/'+(now.getMonth()+1)+'/'+(now.getFullYear()+543)+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      document.getElementById('hdUpload').textContent='📤 วันที่ Upload: '+thaiDate;
+      
+      statusEl.style.background='#d4edda';statusEl.style.color='#155724';
+      statusEl.innerHTML='✅ โหลดสำเร็จ! <b>'+nm+'</b> ('+sz+')<br>'+
+        '📊 Parse ได้ <b>'+parsedCount+' เดือน</b><br>'+
+        '🗓️ แสดงข้อมูลเดือน: <b>'+currentMonth+'</b><br>'+
+        '💡 ใช้ dropdown ด้านบนเพื่อสลับดูเดือนอื่น<br>'+
+        '<details style="margin-top:6px;font-size:11px"><summary>รายละเอียดแต่ละเดือน</summary>'+details.join('<br>')+'</details>';
+      viewBtn.style.display='inline-block';
+
+    }catch(err){
+      statusEl.style.background='#f8d7da';statusEl.style.color='#721c24';
+      statusEl.innerHTML='❌ อ่านไฟล์ไม่สำเร็จ: '+err.message;
+      console.error(err);
+    }
+  };
+  rd.readAsArrayBuffer(file);
+}
+
+function rTags(){
+  document.getElementById('mfl').innerHTML=uF.map((f,i)=>`<div class="mf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${f.name}</span><span class="ms">${f.size}</span><span class="mr" onclick="rmF(${i})">✕</span></div>`).join('');
+  // Show filename on header only
+  const hdEl=document.getElementById('hdFile');
+  if(uF.length>0){hdEl.style.display='inline';hdEl.textContent='📁 '+uF.map(f=>f.name).join(', ');}
+  else{hdEl.style.display='none';hdEl.textContent='';}
+}
+function rmF(i){uF.splice(i,1);rTags();}
+
+// ═══ LINK INPUT & UPDATE ═══
+let linkedUrl='';
+function promptLink(){
+  const url=prompt('กรุณาใส่ลิงค์แหล่งข้อมูล:\n\n• Google Sheets: ใช้ลิงค์ Excel export\n  (File → Download → .xlsx)\n• URL ไฟล์ Excel (.xlsx) ที่เข้าถึงได้\n• Google Sheets published CSV URL');
+  if(!url||!url.trim())return;
+  linkedUrl=url.trim();
+  localStorage.setItem('apf_linked_url',linkedUrl);
+  const name=linkedUrl.length>50?linkedUrl.substring(0,50)+'...':linkedUrl;
+  uF=[{name:'🔗 '+name,size:'Link'}];rTags();
+  document.getElementById('btnUpdate').style.display='inline-flex';
+  // Auto-update immediately
+  updateFromLink();
+}
+
+function updateFromLink(){
+  const url=linkedUrl||localStorage.getItem('apf_linked_url')||'';
+  if(!url){alert('ยังไม่ได้ตั้งค่าลิงค์แหล่งข้อมูล\nกรุณากด "เปลี่ยนด้วยลิงค์" ก่อน');return;}
+  
+  const btn=document.getElementById('btnUpdate');
+  const origHTML=btn.innerHTML;
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>กำลังอัพเดท...';
+  btn.disabled=true;
+
+  fetch(url)
+    .then(res=>{
+      if(!res.ok)throw new Error('HTTP '+res.status+' '+res.statusText);
+      const ct=res.headers.get('content-type')||'';
+      return res.arrayBuffer();
+    })
+    .then(buf=>{
+      // Create a fake File object and pass to readF
+      const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      const fname=url.split('/').pop().split('?')[0]||'linked_data.xlsx';
+      const file=new File([blob],fname);
+      readF(file);
+      btn.innerHTML='✅ อัพเดทสำเร็จ!';btn.style.background='rgba(46,125,50,.3)';
+      setTimeout(()=>{btn.innerHTML=origHTML;btn.style.background='rgba(30,136,229,.2)';btn.disabled=false;},2500);
+    })
+    .catch(err=>{
+      btn.innerHTML=origHTML;btn.disabled=false;
+      const msg='❌ ไม่สามารถดึงข้อมูลจากลิงค์ได้\n\n'+err.message+'\n\nสาเหตุที่พบบ่อย:\n• ไฟล์ไม่ได้ตั้งค่าเป็น public\n• CORS ไม่อนุญาต (ลองใช้ Google Sheets export)\n• URL ผิดรูปแบบ\n\nทางเลือก: ดาวน์โหลดไฟล์แล้วใช้ "เปลี่ยนแหล่งข้อมูล" แทน';
+      alert(msg);
+    });
+}
+
+// Restore linked URL from localStorage on load
+(function(){
+  const saved=localStorage.getItem('apf_linked_url');
+  if(saved){
+    linkedUrl=saved;
+    document.getElementById('btnUpdate').style.display='inline-flex';
+    const name=saved.length>50?saved.substring(0,50)+'...':saved;
+    if(!uF.length){uF=[{name:'🔗 '+name,size:'Link'}];rTags();}
+  }
+})();
+
+// ═══ MULTI-MONTH SUPPORT ═══
+function populateMonthDropdown(){
+  const keys=Object.keys(MONTHLY_DATA);
+  const lbl=document.getElementById('monthLabel');
+  const sep=document.getElementById('monthSep');
+  const grp=document.getElementById('monthGroup');
+  const box=document.getElementById('monthCheckboxes');
+  if(!box||keys.length===0){
+    if(grp)grp.style.display='none';
+    if(lbl)lbl.style.display='none';
+    if(sep)sep.style.display='none';
+    return;
+  }
+  if(grp)grp.style.display='inline-block';
+  if(lbl)lbl.style.display='inline-block';
+  if(sep)sep.style.display='inline-block';
+
+  // Detect year from MONTHLY_DATA (default 69)
+  const yr=69;
+
+  // Build checkboxes
+  box.innerHTML=keys.map(k=>{
+    const m=MONTHLY_DATA[k];
+    const prod=(m.all||[]).filter(a=>a.grp!=='resale');
+    const eB=prod.reduce((s,a)=>s+(a.eB||0),0);
+    const hasData=eB>0;
+    const icon=hasData?'✅':'⏳';
+    // Check by default: months with data, or currentMonth
+    const chk=(hasData||k===currentMonth)?'checked':'' ;
+    return `<label><input type="checkbox" class="fm" value="${k}" ${chk} onchange="onMonthChange()"> ${icon} ${k} ${yr}</label>`;
+  }).join('');
+
+  updateMonthBtn();
+}
+
+function toggleMonthAll(){
+  const allChk=document.getElementById('mAll');
+  document.querySelectorAll('.fm').forEach(c=>c.checked=allChk.checked);
+  onMonthChange();
+}
+
+function onMonthChange(){
+  // Sync "เลือกทั้งหมด" checkbox
+  const all=[...document.querySelectorAll('.fm')];
+  const checked=all.filter(c=>c.checked);
+  const allChk=document.getElementById('mAll');
+  if(allChk){
+    allChk.checked=checked.length===all.length;
+    allChk.indeterminate=checked.length>0&&checked.length<all.length;
+  }
+  updateMonthBtn();
+  // Re-render page 1 annual always; page 2 dashboard with merged data
+  renderAnnualSummary();
+  loadMergedMonth();
+}
+
+function getSelectedMonths(){
+  return [...document.querySelectorAll('.fm:checked')].map(c=>c.value);
+}
+
+function updateMonthBtn(){
+  const all=[...document.querySelectorAll('.fm')];
+  const checked=all.filter(c=>c.checked);
+  const btn=document.getElementById('monthBtn');
+  const badge=document.getElementById('monthBadge');
+  if(!btn)return;
+  if(!checked.length){
+    btn.textContent='';
+    btn.appendChild(Object.assign(document.createElement('span'),{className:'badge',textContent:'0/'+all.length,id:'monthBadge'}));
+    btn.append(' ▾');
+    return;
+  }
+  const label=checked.length===all.length?'ทั้งหมด':
+               checked.length===1?checked[0].value:
+               checked.map(c=>c.value).join(', ');
+  btn.innerHTML=label+' <span class="badge" id="monthBadge">'+checked.length+'/'+all.length+'</span> ▾';
+}
+
+// Merge selected months data into ALL/STOCK then render
+function loadMergedMonth(){
+  const sel=getSelectedMonths();
+  if(!sel.length)return;
+
+  // Merge ALL: sum numeric fields across months
+  const merged={};
+  sel.forEach(mk=>{
+    const mData=MONTHLY_DATA[mk];
+    if(!mData)return;
+    (mData.all||[]).forEach(item=>{
+      if(!merged[item.id]){
+        merged[item.id]=Object.assign({},item,{
+          tB:0,tK:0,dB:0,dK:0,pB:0,pK:0,eB:0,eK:0,ePB:0,dPB:0,pPB:0,
+        });
+      }
+      const m=merged[item.id];
+      ['tB','tK','dB','dK','pB','pK','eB','eK','ePB','dPB','pPB'].forEach(f=>m[f]+=(item[f]||0));
+      // GP% fields: take from last month with data
+      if(item.eB>0){['ax','cp','ct','cw','f'].forEach(f=>{if(item[f]!==undefined)m[f]=item[f];});}
+    });
+  });
+  ALL.length=0;
+  Object.values(merged).forEach(item=>ALL.push(item));
+
+  // STOCK: use most recent selected month
+  const latestMk=sel[sel.length-1];
+  STOCK.length=0;
+  ((MONTHLY_DATA[latestMk]||{}).stock||[]).forEach(item=>STOCK.push(JSON.parse(JSON.stringify(item))));
+
+  // totals: weighted average from last month with data
+  const lastWithData=sel.slice().reverse().find(mk=>{
+    const prod=(MONTHLY_DATA[mk].all||[]).filter(a=>a.grp!=='resale');
+    return prod.reduce((s,a)=>s+(a.eB||0),0)>0;
+  })||latestMk;
+  const t=(MONTHLY_DATA[lastWithData]||{}).totals||{};
+  window._totalF=t.F||0;window._totalAx=t.Ax||0;
+  window._totalCp=t.Cp||0;window._totalCt=t.Ct||0;window._totalCw=t.Cw||0;
+
+  // Period label
+  const label=sel.length===1?sel[0]:sel[0]+'–'+sel[sel.length-1];
+  const el=document.getElementById('hdPeriod');
+  if(el)el.textContent='📅 ข้อมูล: '+label+' ('+sel.length+' เดือน)';
+
+  renderAll();
+  // renderStock if page2 active
+  try{const pg2=document.getElementById('page2');if(pg2&&pg2.classList.contains('active'))renderStock();}catch(e){}
+}
+
+function switchMonth(){
+  // Legacy: called from readF after new data load
+  const keys=Object.keys(MONTHLY_DATA);
+  if(!keys.length)return;
+  const withData=keys.filter(k=>{
+    const prod=(MONTHLY_DATA[k].all||[]).filter(a=>a.grp!=='resale');
+    return prod.reduce((s,a)=>s+(a.eB||0),0)>0;
+  });
+  currentMonth=withData.length>0?withData[withData.length-1]:keys[0];
+  populateMonthDropdown();
+  loadMergedMonth();
+}
+
+// ═══ SAVE DASHBOARD ═══
+function saveDashboard(){
+  try{
+    const ai=[...document.querySelectorAll('.page')].findIndex(p=>p.classList.contains('active'));
+    document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===ai));
+  }catch(e){}
+  let html=document.documentElement.outerHTML;
+  function inject(source,decl,startMark,endMark,value){
+    const start=source.indexOf(decl+startMark);
+    if(start<0)return source;
+    const end=source.indexOf(endMark,start+decl.length+startMark.length);
+    if(end<0)return source;
+    return source.slice(0,start)+decl+startMark+JSON.stringify(value)+endMark+source.slice(end+endMark.length);
+  }
+  html=inject(html,'let ALL=','/*ALL_START*/','/*ALL_END*/',ALL);
+  html=inject(html,'let MONTHLY_DATA=','/*MONTHLY_START*/','/*MONTHLY_END*/',MONTHLY_DATA);
+  html=inject(html,'let STOCK=','/*STK_START*/','/*STK_END*/',STOCK);
+  const blob=new Blob(['<!DOCTYPE html>\n'+html],{type:'text/html;charset=utf-8'});
+  const now=new Date(),dd=String(now.getDate()).padStart(2,'0'),mm=String(now.getMonth()+1).padStart(2,'0'),yy=now.getFullYear()+543,hh=String(now.getHours()).padStart(2,'0'),mi=String(now.getMinutes()).padStart(2,'0');
+  const a=document.createElement('a'),url=URL.createObjectURL(blob);
+  a.href=url;a.download='APF_Dashboard_'+dd+mm+yy+'_'+hh+mi+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+// ═══ ANNOTATION HELPER ═══
+function drawL(chart,tgts,ests,unit,isK){
+  const{ctx}=chart,m0=chart.getDatasetMeta(0),m1=chart.getDatasetMeta(1),m2=chart.getDatasetMeta(2);
+  const dA=chart.data.datasets[1].data,pA=chart.data.datasets[2].data,fmt=isK?K:F;
+  m0.data.forEach((bT,i)=>{
+    const bD=m1.data[i],bP=m2.data[i],bh=h=>Math.abs(h.base-h.y);
+    if(tgts[i]>0){ctx.save();ctx.textAlign='center';if(bh(bT)>30){ctx.font='bold 11px '+FN;ctx.fillStyle='#fff';ctx.fillText(fmt(tgts[i]),bT.x,(bT.y+bT.base)/2+4);}else{ctx.font='bold 10px '+FN;ctx.fillStyle='#2b5797';ctx.fillText(fmt(tgts[i]),bT.x,bT.y-5);}ctx.restore();}
+    if(dA[i]>0){ctx.save();ctx.textAlign='center';if(bh(bD)>30){ctx.font='bold 10px '+FN;ctx.fillStyle='#fff';ctx.fillText(fmt(dA[i]),bD.x,(bD.y+bD.base)/2+4);}else if(bh(bD)>15){ctx.font='bold 8px '+FN;ctx.fillStyle='#fff';ctx.fillText(fmt(dA[i]),bD.x,(bD.y+bD.base)/2+3);}else{ctx.font='bold 9px '+FN;ctx.fillStyle='#2d5016';ctx.fillText(fmt(dA[i]),bD.x,bD.y-4);}ctx.restore();}
+    if(pA[i]>0){ctx.save();ctx.textAlign='center';if(bh(bP)>30){ctx.font='bold 10px '+FN;ctx.fillStyle='#1b4332';ctx.fillText(fmt(pA[i]),bP.x,(bP.y+bP.base)/2+4);}else if(bh(bP)>15){ctx.font='bold 8px '+FN;ctx.fillStyle='#1b4332';ctx.fillText(fmt(pA[i]),bP.x,(bP.y+bP.base)/2+3);}else{ctx.font='bold 9px '+FN;ctx.fillStyle='#2d5016';ctx.fillText(fmt(pA[i]),bP.x,bP.y-4);}ctx.restore();}
+    const top=pA[i]>0?bP.y:(dA[i]>0?bD.y:bD.base);let y=top-14;
+    if(ests[i]>0){ctx.save();ctx.font='bold 12px '+FN;ctx.fillStyle='#1a202c';ctx.textAlign='center';ctx.fillText(fmt(ests[i]),bP.x,y);ctx.restore();y-=20;}
+    if(tgts[i]>0&&ests[i]>0){const pct=P(ests[i],tgts[i]),diff=ests[i]-tgts[i],ip=diff>=0;ctx.save();ctx.textAlign='center';ctx.font='bold 12px '+FN;const pt=F(pct,2)+'%',pw=ctx.measureText(pt).width+12;ctx.fillStyle=ip?'#d4edda':'#f8d7da';ctx.beginPath();ctx.roundRect(bP.x-pw/2,y-12,pw,18,5);ctx.fill();ctx.fillStyle=ip?'#155724':'#721c24';ctx.fillText(pt,bP.x,y+1);y-=24;ctx.font='bold 11px '+FN;const dt=(ip?'+':'')+fmt(diff)+' '+unit,dw=ctx.measureText(dt).width+12,dx=(bT.x+bP.x)/2;ctx.fillStyle=ip?'#d4edda':'#f8d7da';ctx.beginPath();ctx.roundRect(dx-dw/2,y-11,dw,17,5);ctx.fill();ctx.fillStyle=ip?'#155724':'#721c24';ctx.fillText(dt,dx,y+1);ctx.restore();}
+  });
+}
+
+// ═══ ANNUAL SUMMARY ═══
+function renderAnnualSummary(){
+  const allMonths=Object.keys(MONTHLY_DATA);
+  const selM=(typeof getSelectedMonths==='function')?getSelectedMonths():allMonths;
+  const months=allMonths.filter(m=>selM.indexOf(m)>=0);
+  if(!months.length){document.getElementById('annualSection').style.display='none';return;}
+  document.getElementById('annualSection').style.display='block';
+
+  const grpKeys=['fg']; // apply current group filter
+  const grps=new Set([...document.querySelectorAll('.fg:checked')].map(c=>c.value));
+  const prods=new Set([...document.querySelectorAll('.fp:checked')].map(c=>c.value));
+  const filterItems=(arr)=>arr.filter(p=>grps.has(p.grp)&&prods.has(p.id));
+
+  // Collect per-month stats
+  let totalTB=0,totalTK=0,totalEB=0,totalEK=0;
+  let totalEPB=0; // gross profit amount (ePB)
+  let totalTgGP=0; // target GP% weighted
+  let activeMonths=0;
+  const rows=[];
+
+  months.forEach(m=>{
+    const mData=MONTHLY_DATA[m];
+    const items=filterItems(mData.all||[]);
+    // ใช้ชุดสินค้าเดียวกันทุกคอลัมน์ เพื่อให้ฐานคำนวณอัตรากำไรตรงกับยอดขายที่แสดง
+    const sum=(arr,k)=>arr.reduce((s,x)=>s+(x[k]||0),0);
+    const tB=sum(items,'tB');
+    const tK=sum(items,'tK');
+    const eB=sum(items,'eB');
+    const eK=sum(items,'eK');
+    const ePB=sum(items,'ePB');
+    // GP เป้า: เป็นค่าที่ฝ่ายบริหารกำหนดในไฟล์ (ใช้เมื่อเลือกครบ) มิฉะนั้นถ่วงน้ำหนักจากสินค้าที่เลือก
+    const allSel=(prods.size===document.querySelectorAll('.fp').length&&grps.size===document.querySelectorAll('.fg').length);
+    const calcTg=tB>0?items.reduce((a,p)=>a+(p.f||0)*(p.tB||0),0)/tB:0;
+    const tgGP=allSel?((mData.totals&&mData.totals.F)||calcTg):calcTg;
+    // GP ทำได้: คิดจากกำไรขั้นต้น ÷ ยอดขาย ของชุดสินค้าเดียวกันเสมอ
+    const ctGP=eB>0?ePB/eB*100:0;
+
+    totalTB+=tB;totalTK+=tK;totalEB+=eB;totalEK+=eK;totalEPB+=ePB;
+
+    const hasData=eB>0;
+    if(hasData)activeMonths++;
+    totalTgGP+=tgGP*tB; // weight target GP% by target baht
+
+    rows.push({m,tB,tK,eB,eK,ePB,tgGP,ctGP,hasData});
+  });
+
+  const avgTgGP=totalTB>0?totalTgGP/totalTB:0;
+  // Weighted average actual GP% = totalEPB / totalEB * 100
+  const actualGP=totalEB>0?totalEPB/totalEB*100:0;
+  const gpDiff=actualGP-avgTgGP;
+
+  // Update tag
+  const tag=document.getElementById('annualMonthsTag');
+  const nP=document.querySelectorAll('.fp').length,nPs=prods.size;
+  const nG=document.querySelectorAll('.fg').length,nGs=grps.size;
+  const isAll=(nPs===nP&&nGs===nG);
+  const allM=(months.length===allMonths.length);
+  const scopeTxt=allM?'ทุกเดือนที่มีข้อมูล':'เฉพาะ '+months.join(', ');
+  const tEl=document.getElementById('annualTitle');
+  if(tEl)tEl.textContent=(allM?'สรุปผลทั้งปี':'สรุปผลตามเดือนที่เลือก')+' ('+scopeTxt+')';
+  const t2El=document.getElementById('annualTblTitle');
+  if(t2El)t2El.textContent='รายละเอียดรายเดือน (เทียบเป้าหมาย'+(allM?'รวมปี':'รวมเดือนที่เลือก')+')';
+  tag.textContent=(allM?'ทุกเดือน':'เดือนที่เลือก '+months.join(', '))+' • มีข้อมูล '+activeMonths+'/'+months.length+' เดือน'+(isAll?' • ทุกสินค้า':' • ตามตัวกรอง '+nPs+'/'+nP+' สินค้า, '+nGs+'/'+nG+' กลุ่ม');
+  const fl=document.getElementById('annualFilterList');
+  if(fl){
+    if(isAll){fl.style.display='none';}
+    else{
+      const names=[...document.querySelectorAll('.fp:checked')].map(c=>c.parentNode.textContent.trim());
+      fl.style.display='block';
+      fl.textContent='🔎 แสดงเฉพาะ: '+(names.length?names.join(' • '):'(ไม่ได้เลือกสินค้า)');
+    }
+  }
+
+  // ── Progress Card: บาท ──
+  const pctB=totalTB>0?Math.min(totalEB/totalTB*100,999):0;
+  const diffB=totalEB-totalTB;
+  const gapB=totalTB-totalEB;
+  document.getElementById('an_eB').textContent=KB(totalEB);
+  document.getElementById('an_tB').textContent=KB(totalTB);
+  document.getElementById('an_eB_bar').style.width=Math.min(pctB,100)+'%';
+  document.getElementById('an_eB_bar').style.background=pctB>=100?'linear-gradient(90deg,#2e7d32,#4caf50)':'linear-gradient(90deg,var(--green-700),var(--green-500))';
+  document.getElementById('an_eB_pct').textContent=F(pctB,1)+'%';
+  document.getElementById('an_eB_pct').style.color=pctB>=100?'#2e7d32':'#c62828';
+  document.getElementById('an_eB_diff').textContent=(diffB>=0?'+':'')+KB(diffB);
+  document.getElementById('an_eB_diff').style.color=diffB>=0?'#2e7d32':'#c62828';
+  const gapBEl=document.getElementById('an_eB_gap');
+  if(gapB<=0){gapBEl.textContent='บรรลุเป้าแล้ว ✅';gapBEl.style.color='#2e7d32';}
+  else{gapBEl.textContent=KB(gapB);gapBEl.style.color='#c62828';}
+
+  // ── Progress Card: ตัน ──
+  const pctK=totalTK>0?Math.min(totalEK/totalTK*100,999):0;
+  const diffK=totalEK-totalTK;
+  const gapK=totalTK-totalEK;
+  document.getElementById('an_eK').textContent=F(totalEK,0)+' ตัน';
+  document.getElementById('an_tK').textContent=F(totalTK,0)+' ตัน';
+  document.getElementById('an_eK_bar').style.width=Math.min(pctK,100)+'%';
+  document.getElementById('an_eK_bar').style.background=pctK>=100?'linear-gradient(90deg,#2e7d32,#4caf50)':'linear-gradient(90deg,var(--green-700),var(--green-500))';
+  document.getElementById('an_eK_pct').textContent=F(pctK,1)+'%';
+  document.getElementById('an_eK_pct').style.color=pctK>=100?'#2e7d32':'#c62828';
+  document.getElementById('an_eK_diff').textContent=(diffK>=0?'+':'')+F(diffK,0)+' ตัน';
+  document.getElementById('an_eK_diff').style.color=diffK>=0?'#2e7d32':'#c62828';
+  const gapKEl=document.getElementById('an_eK_gap');
+  if(gapK<=0){gapKEl.textContent='บรรลุเป้าแล้ว ✅';gapKEl.style.color='#2e7d32';}
+  else{gapKEl.textContent=F(gapK,0)+' ตัน';gapKEl.style.color='#c62828';}
+
+  // ── Progress Card: GP% ──
+  const gpPct=avgTgGP>0?Math.min(actualGP/avgTgGP*100,999):0;
+  const ctEl=document.getElementById('an_ctPct');
+  ctEl.textContent=F(actualGP,2)+'%';
+  ctEl.style.color=gpDiff>=0?'#2e7d32':'#c62828';
+  document.getElementById('an_tgPct').textContent=F(avgTgGP,2)+'%';
+  const bar=document.getElementById('an_ct_bar');
+  bar.style.width=Math.min(gpPct,100)+'%';
+  bar.style.background=gpDiff>=0?'linear-gradient(90deg,#2e7d32,#4caf50)':'linear-gradient(90deg,#e53935,#ef9a9a)';
+  const ctPctLbl=document.getElementById('an_ct_pct_lbl');
+  ctPctLbl.textContent=F(gpPct,1)+'% ของเป้า';
+  ctPctLbl.style.color=gpDiff>=0?'#2e7d32':'#c62828';
+  document.getElementById('an_ct_diff').textContent=(gpDiff>=0?'+':'')+F(gpDiff,2)+'%';
+  document.getElementById('an_ct_diff').style.color=gpDiff>=0?'#2e7d32':'#c62828';
+  const gapGP=avgTgGP-actualGP;
+  const gapGPBaht=totalEB*(gapGP/100);
+  const ctGapEl=document.getElementById('an_ct_gap');
+  const ctGapBahtEl=document.getElementById('an_ct_gap_baht');
+  if(gapGP<=0){
+    ctGapEl.textContent='บรรลุเป้าแล้ว ✅';ctGapEl.style.color='#2e7d32';
+    ctGapBahtEl.textContent='';
+  }else{
+    ctGapEl.textContent=F(gapGP,2)+'%';ctGapEl.style.color='#c62828';
+    ctGapBahtEl.textContent='คิดเป็นกำไรที่ต้องทำเพิ่ม ≈ '+KB(gapGPBaht);
+  }
+
+  // ── Detail table ──
+  const sum=(arr,k)=>arr.reduce((s,x)=>s+(x[k]||0),0);
+  let cumTB=0,cumEB=0,cumTK=0,cumEK=0;
+  let html='';
+  rows.forEach(r=>{
+    cumTB+=r.tB;cumEB+=r.eB;cumTK+=r.tK;cumEK+=r.eK;
+    const dB=r.eB-r.tB,dK=r.eK-r.tK,dGP=r.ctGP-r.tgGP;
+    const statusIcon=!r.hasData?'<span style="color:#aaa;font-size:11px">⏳ ยังไม่มีข้อมูล</span>':dB>=0?'<span style="color:#2e7d32;font-weight:700">✅ เกินเป้า</span>':'<span style="color:#c62828;font-weight:700">⚠️ ต่ำกว่าเป้า</span>';
+    const colorB=dB>=0?'#2e7d32':'#c62828';
+    const colorK=dK>=0?'#2e7d32':'#c62828';
+    const colorGP=dGP>=0?'#2e7d32':'#c62828';
+    const rowBg=!r.hasData?'background:rgba(0,0,0,.02);':'';
+    html+=`<tr style="${rowBg}border-bottom:1px solid var(--border)">
+      <td style="padding:5px 8px;font-weight:700;color:var(--green-800);white-space:nowrap">${r.m} 69</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums">${r.hasData||r.tB?F(r.tB,2):'-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-variant-numeric:tabular-nums;font-weight:600">${r.eB?F(r.eB,2):'-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:${colorB};font-weight:700">${r.hasData?(dB>=0?'+':'')+F(dB,2):'-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">${r.tK?F(r.tK,2):'-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">${r.eK?F(r.eK,2):'-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:${colorK};font-weight:700">${r.hasData?(dK>=0?'+':'')+F(dK,2):'-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums">${r.tgGP?F(r.tgGP,2)+'%':'-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600">${r.hasData&&r.ctGP?F(r.ctGP,2)+'%':'-'}</td>
+      <td style="padding:5px 8px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;color:${colorGP};font-weight:700">${r.hasData&&r.tgGP?(dGP>=0?'+':'')+F(dGP,2)+'%':'-'}</td>
+      <td style="padding:5px 8px;text-align:center;white-space:nowrap">${statusIcon}</td>
+    </tr>`;
+  });
+  document.getElementById('annualTblBody').innerHTML=html;
+
+  // Footer: cumulative totals
+  const cumDB=cumEB-cumTB,cumDK=cumEK-cumTK;
+  const cumGP=totalEB>0?totalEPB/totalEB*100:0;
+  const fcB=cumDB>=0?'#2e7d32':'#c62828';
+  const fcK=cumDK>=0?'#2e7d32':'#c62828';
+  const fcGP=gpDiff>=0?'#2e7d32':'#c62828';
+  document.getElementById('annualTblFoot').innerHTML=`
+    <tr style="background:var(--green-800);color:#fff;font-weight:800;font-size:12px">
+      <td style="padding:9px 10px">${allM?'รวมทั้งปี':'รวมเดือนที่เลือก'}</td>
+      <td style="padding:9px 10px;text-align:right">${F(cumTB,2)}</td>
+      <td style="padding:9px 10px;text-align:right">${F(cumEB,2)}</td>
+      <td style="padding:9px 10px;text-align:right;color:${cumDB>=0?'#a5d6a7':'#ef9a9a'}">${(cumDB>=0?'+':'')+F(cumDB,2)}</td>
+      <td style="padding:9px 10px;text-align:right">${F(cumTK,2)} ตัน</td>
+      <td style="padding:9px 10px;text-align:right">${F(cumEK,2)} ตัน</td>
+      <td style="padding:9px 10px;text-align:right;color:${cumDK>=0?'#a5d6a7':'#ef9a9a'}">${(cumDK>=0?'+':'')+F(cumDK,2)} ตัน</td>
+      <td style="padding:9px 10px;text-align:right">${F(avgTgGP,2)}%</td>
+      <td style="padding:9px 10px;text-align:right">${F(cumGP,2)}%</td>
+      <td style="padding:9px 10px;text-align:right;color:${gpDiff>=0?'#a5d6a7':'#ef9a9a'}">${(gpDiff>=0?'+':'')+F(gpDiff,2)}%</td>
+      <td style="padding:9px 10px;text-align:center">${cumDB>=0?'✅ เกินเป้า':'⚠️ ต่ำกว่าเป้า'}</td>
+    </tr>`;
+}
+
+// ═══ RENDER ALL ═══
+function renderAll(){
+  renderAnnualSummary();
+  const data=getFiltered();
+  const sum=(arr,k)=>arr.reduce((s,x)=>s+(x[k]||0),0);
+
+  // Summary — separate produced vs resale
+  const produced=data.filter(p=>p.grp!=='resale');
+  const resale=data.filter(p=>p.grp==='resale');
+  const tB=sum(produced,'tB'),dB=sum(produced,'dB'),pB=sum(produced,'pB'),eB=sum(produced,'eB'),diffB=eB-tB;
+  const tK=sum(produced,'tK'),dK=sum(produced,'dK'),pK=sum(produced,'pK'),eK=sum(produced,'eK'),diffK=eK-tK;
+  const rTB=sum(resale,'tB'),rDB=sum(resale,'dB'),rPB=sum(resale,'pB'),rEB=sum(resale,'eB');
+  const rTK=sum(resale,'tK'),rDK=sum(resale,'dK'),rPK=sum(resale,'pK'),rEK=sum(resale,'eK');
+
+  // Row 1: Baht (สินค้าผลิต)
+  document.getElementById('s1').textContent=F(tB,2);
+  document.getElementById('s2').textContent=F(eB,2);
+  document.getElementById('s3').textContent=(diffB>=0?'+':'')+F(diffB,2);
+  document.getElementById('s3').style.color=diffB>=0?'#2e7d32':'#c62828';
+  document.getElementById('s3s').textContent=diffB>=0?'เกินเป้า':'ต่ำกว่าเป้า';
+  document.getElementById('s_pct').textContent=tB?F(P(eB,tB),2)+'%':'-';
+  document.getElementById('s_pct').style.color=eB>=tB?'#2e7d32':'#c62828';
+
+  // Row 2: Tons (สินค้าผลิต)
+  document.getElementById('s_tK').textContent=F(tK,2)+' ตัน';
+  document.getElementById('s_eK').textContent=F(eK,2)+' ตัน';
+  document.getElementById('s_dK').textContent=(diffK>=0?'+':'')+F(diffK,2)+' ตัน';
+  document.getElementById('s_dK').style.color=diffK>=0?'#2e7d32':'#c62828';
+  document.getElementById('s_dKs').textContent=diffK>=0?'เกินเป้า':'ต่ำกว่าเป้า';
+  const tonPct=tK?P(eK,tK):0;
+  document.getElementById('s_prof').textContent=tK?F(tonPct,2)+'%':'-';
+  document.getElementById('s_prof').style.color=tonPct>=100?'#2e7d32':'#c62828';
+  document.getElementById('s_profs').textContent=F(eK,2)+' / '+F(tK,2)+' ตัน';
+
+  // Row 3: Other + Resale
+  const other=data.filter(p=>p.grp==='other');
+  const oEB=sum(other,'eB'),oEK=sum(other,'eK');
+  document.getElementById('so_eB').textContent=F(oEB,2);
+  document.getElementById('so_eK').textContent=F(oEK,2)+' ตัน';
+  document.getElementById('sr_eB').textContent=F(rEB,2);
+  document.getElementById('sr_eK').textContent=F(rEK,2)+' ตัน';
+
+  // Row 4: Grand Total
+  const allEB=eB+rEB, allEK=eK+rEK;
+  const allDB=dB+rDB, allPB=pB+rPB;
+  const allDK=dK+rDK, allPK=pK+rPK;
+  document.getElementById('sa_eB').textContent=F(allEB,2);
+  document.getElementById('sa_eK').textContent=F(allEK,2)+' ตัน';
+  document.getElementById('sa_dB').textContent=F(allDB,2);
+  document.getElementById('sa_pB').textContent=F(allPB,2);
+  document.getElementById('sa_dK').textContent=F(allDK,2)+' ตัน';
+  document.getElementById('sa_pK').textContent=F(allPK,2)+' ตัน';
+
+  // ── C1: Baht by group ──
+  const grpKeys=[{k:'G1',l:'G.1 Premium NON GMO'},{k:'G2',l:'G.2 Protein Food'},{k:'G3',l:'G.3 Soybean Oil'},{k:'other',l:'สินค้าอื่นๆ'},{k:'_total',l:'สรุปรวม (ผลิต)'},{k:'resale',l:'สินค้าซื้อมาขาย'}];
+  function grpSum(gk,field){
+    if(gk==='_total')return sum(produced,field);
+    if(gk==='G1')return sum(data.filter(p=>p.grp==='G1'||p.grp==='G1g'),field);
+    if(gk==='G2')return sum(data.filter(p=>p.grp==='G2'||p.grp==='G2+'),field);
+    // สินค้าอื่นๆ+ซื้อมาขาย: ไม่แสดงเป้า
+    if((gk==='other'||gk==='resale')&&(field==='tB'||field==='tK'))return 0;
+    return sum(data.filter(p=>p.grp===gk),field);
+  }
+  const c1l=grpKeys.map(g=>g.l),c1t=grpKeys.map(g=>grpSum(g.k,'tB')),c1d=grpKeys.map(g=>grpSum(g.k,'dB')),c1p=grpKeys.map(g=>grpSum(g.k,'pB')),c1e=grpKeys.map(g=>grpSum(g.k,'eB'));
+  dc('c1');CX['c1']=new Chart(document.getElementById('c1'),{type:'bar',data:{labels:c1l,datasets:[
+    {label:'เป้า (บาท)',data:c1t,backgroundColor:'#4472c4',stack:'a',barPercentage:BP,categoryPercentage:CP,borderRadius:4},
+    {label:'ส่งแล้ว (บาท)',data:c1d,backgroundColor:'#3d6b1e',stack:'b',barPercentage:BP,categoryPercentage:CP},
+    {label:'รอส่ง (บาท)',data:c1p,backgroundColor:'#8bc34a',stack:'b',barPercentage:BP,categoryPercentage:CP,borderRadius:{topLeft:4,topRight:4}},
+  ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:90,right:30,left:10}},plugins:{legend:LG(11),title:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+F(c.raw)+' บาท'}}},scales:{y:{stacked:true,beginAtZero:true,grace:'30%',ticks:{callback:v=>v>=1e6?(v/1e6).toFixed(0)+'M':'',font:{family:FN,size:10},maxTicksLimit:8},grid:{color:'rgba(0,0,0,.04)'}},x:{stacked:true,ticks:{font:{family:FN,size:10,weight:'600'}},grid:{display:false}}},animation:{duration:500}},plugins:[{afterDatasetsDraw(ch){drawL(ch,c1t,c1e,'บาท',true);}}]});
+
+  // ── C2: Tons by group ──
+  const c2t=grpKeys.map(g=>grpSum(g.k,'tK')),c2d=grpKeys.map(g=>grpSum(g.k,'dK')),c2p=grpKeys.map(g=>grpSum(g.k,'pK')),c2e=grpKeys.map(g=>grpSum(g.k,'eK'));
+  dc('c2');CX['c2']=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:c1l,datasets:[
+    {label:'เป้า (ตัน)',data:c2t,backgroundColor:'#4472c4',stack:'a',barPercentage:BP,categoryPercentage:CP,borderRadius:4},
+    {label:'ส่งแล้ว (ตัน)',data:c2d,backgroundColor:'#3d6b1e',stack:'b',barPercentage:BP,categoryPercentage:CP},
+    {label:'รอส่ง (ตัน)',data:c2p,backgroundColor:'#8bc34a',stack:'b',barPercentage:BP,categoryPercentage:CP,borderRadius:{topLeft:4,topRight:4}},
+  ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:90,right:30,left:10}},plugins:{legend:LG(11),title:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+F(c.raw)+' ตัน'}}},scales:{y:{stacked:true,beginAtZero:true,grace:'30%',ticks:{font:{family:FN,size:10},maxTicksLimit:8},grid:{color:'rgba(0,0,0,.04)'}},x:{stacked:true,ticks:{font:{family:FN,size:10,weight:'600'}},grid:{display:false}}},animation:{duration:500}},plugins:[{afterDatasetsDraw(ch){drawL(ch,c2t,c2e,'ตัน',false);}}]});
+
+  // ── C3a/C3b: Profit % ──
+  const profitItems=data.filter(p=>p.grp!=='resale');
+  const half=Math.ceil(profitItems.length/2);
+  const c3a_items=profitItems.slice(0,half),c3b_items=[...profitItems.slice(half),...data.filter(p=>p.grp==='resale')];
+  // Add total row to c3b — use Excel Row 23 totals if available, otherwise calculate
+  if(profitItems.length>0){
+    const totalEB=sum(profitItems,'eB'),totalDB=sum(profitItems,'dB'),totalPB=sum(profitItems,'pB'),totalTB=sum(profitItems,'tB');
+    const totalEPB=sum(profitItems,'ePB')||0,totalDPB=sum(profitItems,'dPB')||0,totalPPB=sum(profitItems,'pPB')||0;
+    const wTB=profitItems.reduce((s,p)=>s+(p.f||0)*(p.tB||0),0);
+    // เลือกครบทั้งหมด → ใช้ค่ารวมทั้งปีจาก Excel; เลือกบางส่วน → คำนวณอัตรากำไรเฉพาะส่วนที่เลือก
+    const _fgAll=document.querySelectorAll('.fg').length===document.querySelectorAll('.fg:checked').length;
+    const _fpAll=document.querySelectorAll('.fp').length===document.querySelectorAll('.fp:checked').length;
+    const _isAll=_fgAll&&_fpAll;
+    const totF=(_isAll&&window._totalF!=null)?window._totalF:(totalTB>0?Math.round(wTB/totalTB*100)/100:0);
+    const totAx=(_isAll&&window._totalAx!=null)?window._totalAx:(totalDB>0?Math.round(totalDPB/totalDB*10000)/100:0);
+    const totCp=(_isAll&&window._totalCp!=null)?window._totalCp:(totalPB>0?Math.round(totalPPB/totalPB*10000)/100:0);
+    const totCt=(_isAll&&window._totalCt!=null)?window._totalCt:(totalEB>0?Math.round(totalEPB/totalEB*10000)/100:0);
+    const totCw=(_isAll&&window._totalCw!=null)?window._totalCw:Math.round((totCt-totF)*100)/100;
+    c3b_items.push({l:_isAll?'% รวมทุก G':'% รวม (ที่เลือก)',f:totF,ax:totAx,cp:totCp,ct:totCt,cw:totCw});
+  }
+  buildC3('c3a',c3a_items);buildC3('c3b',c3b_items);
+
+  // ── C4/C5: G3 detail ──
+  const g3=data.filter(p=>p.grp==='G3');
+  const c4l=g3.map(p=>p.l).concat(['สรุปรวม']),c4t=[...g3.map(p=>p.tB),sum(g3,'tB')],c4d=[...g3.map(p=>p.dB),sum(g3,'dB')],c4p=[...g3.map(p=>p.pB),sum(g3,'pB')],c4e=[...g3.map(p=>p.eB),sum(g3,'eB')];
+  dc('c4');CX['c4']=new Chart(document.getElementById('c4'),{type:'bar',data:{labels:c4l,datasets:[
+    {label:'เป้า',data:c4t,backgroundColor:'#4472c4',stack:'a',barPercentage:BP,categoryPercentage:CP,borderRadius:4},
+    {label:'ส่งแล้ว',data:c4d,backgroundColor:'#3d6b1e',stack:'b',barPercentage:BP,categoryPercentage:CP},
+    {label:'รอส่ง',data:c4p,backgroundColor:'#8bc34a',stack:'b',barPercentage:BP,categoryPercentage:CP,borderRadius:{topLeft:4,topRight:4}},
+  ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:80,right:20,left:5}},plugins:{legend:LG(10),title:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+F(c.raw)+' บาท'}}},scales:{y:{stacked:true,beginAtZero:true,grace:'30%',ticks:{callback:v=>(v/1e6).toFixed(0)+'M',font:{family:FN,size:10},maxTicksLimit:7},grid:{color:'rgba(0,0,0,.04)'}},x:{stacked:true,ticks:{font:{family:FN,size:10,weight:'600'}},grid:{display:false}}},animation:{duration:500}},plugins:[{afterDatasetsDraw(ch){drawL(ch,c4t,c4e,'บาท',true);}}]});
+
+  const c5t=[...g3.map(p=>p.tK),sum(g3,'tK')],c5d=[...g3.map(p=>p.dK),sum(g3,'dK')],c5p=[...g3.map(p=>p.pK),sum(g3,'pK')],c5e=[...g3.map(p=>p.eK),sum(g3,'eK')];
+  dc('c5');CX['c5']=new Chart(document.getElementById('c5'),{type:'bar',data:{labels:c4l,datasets:[
+    {label:'เป้า',data:c5t,backgroundColor:'#4472c4',stack:'a',barPercentage:BP,categoryPercentage:CP,borderRadius:4},
+    {label:'ส่งแล้ว',data:c5d,backgroundColor:'#3d6b1e',stack:'b',barPercentage:BP,categoryPercentage:CP},
+    {label:'รอส่ง',data:c5p,backgroundColor:'#8bc34a',stack:'b',barPercentage:BP,categoryPercentage:CP,borderRadius:{topLeft:4,topRight:4}},
+  ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:80,right:20,left:5}},plugins:{legend:LG(10),title:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+F(c.raw)+' ตัน'}}},scales:{y:{stacked:true,beginAtZero:true,grace:'30%',ticks:{font:{family:FN,size:10},maxTicksLimit:7},grid:{color:'rgba(0,0,0,.04)'}},x:{stacked:true,ticks:{font:{family:FN,size:10,weight:'600'}},grid:{display:false}}},animation:{duration:500}},plugins:[{afterDatasetsDraw(ch){drawL(ch,c5t,c5e,'ตัน',false);}}]});
+
+
+  // ── C7: Pie Sales ──
+  const pieData=data.filter(p=>p.eB>0).map(p=>({l:p.l,g:p.grp==='G1'?'G.1':p.grp==='G1g'?'G.1 GMO':p.grp==='G2+'?'G.2+':p.grp==='G2'?'G.2':p.grp==='G3'?'G.3':p.grp,v:p.eB}));
+  const tot7=pieData.reduce((s,x)=>s+x.v,0);
+  document.getElementById('c7t').textContent='มูลค่ารวม '+F(tot7,2)+' บาท';
+  const colors7=['#4472c4','#d4a017','#8bc34a','#3d6b1e','#548235','#1b4332','#c62828','#fdd835','#5b9bd5'];
+  dc('c7');CX['c7']=new Chart(document.getElementById('c7'),{type:'pie',data:{labels:pieData.map(x=>x.l),datasets:[{data:pieData.map(x=>x.v),backgroundColor:colors7.slice(0,pieData.length),borderWidth:2.5,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:10},plugins:{legend:LG(9),title:{display:false},tooltip:{callbacks:{label:c=>{const p=(c.raw/tot7*100).toFixed(1);return c.label+': '+F(c.raw)+' บาท ('+p+'%)';}}}},animation:{duration:500}},plugins:[{afterDatasetsDraw(ch){const{ctx}=ch;ch.getDatasetMeta(0).data.forEach((a,i)=>{const p=pieData[i].v/tot7*100,{x,y}=a.tooltipPosition();ctx.save();ctx.textAlign='center';if(p>=5){ctx.font='bold 13px '+FN;ctx.fillStyle='#fff';ctx.fillText(pieData[i].g,x,y-12);ctx.font='bold 11px '+FN;ctx.fillText(F(p,0)+'%',x,y+4);ctx.font='600 9px '+FN;ctx.fillText(KB(pieData[i].v),x,y+18);}else if(p>=1){ctx.font='bold 10px '+FN;ctx.fillStyle='#fff';ctx.fillText(pieData[i].g+' '+F(p,0)+'%',x,y);}ctx.restore();});}}]});
+
+  // ── C8: Pie Profit ──
+  const pieProf=data.filter(p=>p.ePB>0).map(p=>({l:p.l,g:p.grp==='G1'?'G.1':p.grp==='G1g'?'G.1 GMO':p.grp==='G2+'?'G.2+':p.grp==='G2'?'G.2':p.grp==='G3'?'G.3':p.grp,v:p.ePB}));
+  const tot8=pieProf.reduce((s,x)=>s+x.v,0);
+  document.getElementById('c8t').textContent='กำไรรวม '+F(tot8,2)+' บาท';
+  dc('c8');CX['c8']=new Chart(document.getElementById('c8'),{type:'pie',data:{labels:pieProf.map(x=>x.l),datasets:[{data:pieProf.map(x=>x.v),backgroundColor:colors7.slice(0,pieProf.length),borderWidth:2.5,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:10},plugins:{legend:LG(9),title:{display:false},tooltip:{callbacks:{label:c=>{const p=(c.raw/tot8*100).toFixed(1);return c.label+': '+F(c.raw)+' บาท ('+p+'%)';}}}},animation:{duration:500}},plugins:[{afterDatasetsDraw(ch){const{ctx}=ch;ch.getDatasetMeta(0).data.forEach((a,i)=>{const p=pieProf[i].v/tot8*100,{x,y}=a.tooltipPosition();ctx.save();ctx.textAlign='center';if(p>=5){ctx.font='bold 13px '+FN;ctx.fillStyle='#fff';ctx.fillText(pieProf[i].g,x,y-12);ctx.font='bold 11px '+FN;ctx.fillText(F(p,1)+'%',x,y+4);ctx.font='600 9px '+FN;ctx.fillText(KB(pieProf[i].v),x,y+18);}else if(p>=1){ctx.font='bold 10px '+FN;ctx.fillStyle='#fff';ctx.fillText(F(p,1)+'%',x,y);}ctx.restore();});}}]});
+
+  // ── Stock Table ──
+  renderStock();
+}
+
+// ── C3 builder ──
+function buildC3(canvasId,items){
+  dc(canvasId);
+  if(!items.length)return;
+  CX[canvasId]=new Chart(document.getElementById(canvasId),{type:'bar',
+    data:{labels:items.map(x=>x.l),datasets:[
+      {label:'กำไรเป้า %',data:items.map(x=>x.f||0),backgroundColor:'#4472c4',borderRadius:3,barPercentage:.7,categoryPercentage:.85},
+      {label:'กำไรส่งแล้ว %',data:items.map(x=>x.ax||0),backgroundColor:'#548235',borderRadius:3,barPercentage:.7,categoryPercentage:.85},
+      {label:'กำไรรอส่ง %',data:items.map(x=>x.cp||0),backgroundColor:'#a9d18e',borderRadius:3,barPercentage:.7,categoryPercentage:.85},
+      {label:'กำไรรวม %',data:items.map(x=>x.ct||0),backgroundColor:'#fdd835',borderRadius:3,barPercentage:.7,categoryPercentage:.85}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:45,right:10,left:8}},plugins:{legend:LG(9),title:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+F(c.raw,2)+'%'}}},scales:{y:{beginAtZero:true,grace:'22%',ticks:{callback:v=>v.toFixed(0)+'.00%',font:{family:FN,size:9},maxTicksLimit:8,stepSize:10},grid:{color:'rgba(0,0,0,.06)'}},x:{ticks:{font:{family:FN,size:8,weight:'600'},maxRotation:40,autoSkip:false},grid:{display:true,drawOnChartArea:true,color:'rgba(0,0,0,.1)',lineWidth:1,offset:true,drawTicks:false}}},animation:{duration:500}},
+    plugins:[{afterDatasetsDraw(ch){const{ctx}=ch;ch.data.datasets.forEach((ds,di)=>{ch.getDatasetMeta(di).data.forEach((b,i)=>{const v=ds.data[i];if(!v||v===0)return;ctx.save();ctx.textAlign='center';ctx.font='bold 9px '+FN;ctx.fillStyle='#333';ctx.fillText(F(v,2)+'%',b.x,b.y-5);ctx.restore();});});
+      items.forEach((x,i)=>{if(!x.f||x.f<=0)return;const bars=[0,1,2,3].map(d=>ch.getDatasetMeta(d).data[i]);const minY=Math.min(...bars.map(b=>b.y)),xs=bars.map(b=>b.x),cx=(Math.min(...xs)+Math.max(...xs))/2,pos=(x.cw||0)>=0;ctx.save();ctx.font='bold 10px '+FN;const txt='เทียบเป้า '+(pos?'':'')+F(x.cw||0,2)+'%',tw=ctx.measureText(txt).width+12;ctx.fillStyle=pos?'#d4edda':'#f8d7da';ctx.beginPath();ctx.roundRect(cx-tw/2,minY-34,tw,19,5);ctx.fill();ctx.strokeStyle=pos?'#a3cfbb':'#e8aaaa';ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(cx-tw/2,minY-34,tw,19,5);ctx.stroke();ctx.fillStyle=pos?'#155724':'#721c24';ctx.textAlign='center';ctx.fillText(txt,cx,minY-21);ctx.restore();});
+    }}]
+  });
+}
+
+// ═══ STOCK DATA ═══
+let STOCK=/*STK_START*/[]/*STK_END*/;
+
+function renderStock(){
+  if(!document.getElementById('stockTbl'))return; // หน้าสต๊อกถูกนำออกแล้ว
+  if(!STOCK||STOCK.length===0){
+    document.getElementById('stockTbl').innerHTML='<thead><tr><th>ตารางสต๊อก</th></tr></thead><tbody><tr><td style="text-align:center;padding:40px;color:#888;font-size:14px">⚠️ ไม่มีข้อมูลสต๊อกสำหรับเดือนนี้</td></tr></tbody>';
+    document.getElementById('stTot').textContent='-';
+    return;
+  }
+  const n=(v,d=2)=>{if(v==null||isNaN(v)||v===0)return'<td class="num">-</td>';const neg=v<0;return`<td class="num${neg?' neg':''}">${F(v,d)}</td>`;};
+  const ni=(v)=>{if(v==null||isNaN(v)||v===0)return'<td class="num">-</td>';const neg=v<0;return`<td class="num${neg?' neg':''}">${F(v,0)}</td>`;};
+  const nv=(v)=>{if(v==null||isNaN(v)||v===0)return'<td class="num">-</td>';const neg=v<0;return`<td class="num${neg?' neg':''}">${F(v,2)}</td>`;};
+  const calcSV=(price,tot,pack)=>{
+    if(!price||!tot||isNaN(price)||isNaN(tot))return null;
+    return pack?price*tot:price*tot*1000;
+  };
+  const isPack=(s)=>s.lcd==='LCD 6'&&s.n&&(s.n.includes('Liter')||s.n.includes('ลิตร'));
+  let inPack=false;
+  let html=`<thead><tr>
+    <th>กลุ่ม</th><th>LCD</th><th style="text-align:left;min-width:200px">ชื่อสินค้า</th><th>หน่วย</th>
+    <th>สต๊อก PAS</th><th>สต๊อก APF</th><th>สต๊อกรวม</th>
+    <th>จำนวนผลิต</th><th>ออเดอร์รอส่ง</th><th>สต๊อกคงเหลือ</th>
+    <th style="white-space:nowrap">ราคาประมาณ<br>(พันบาท)</th>
+    <th style="white-space:nowrap">มูลค่าสต๊อครวม<br>(บาท)</th>
+  </tr></thead><tbody>`;
+  let gtTon ={pas:0,apf:0,tot:0,prod:0,rem:0,sv:0};
+  let gtPack={apf:0,tot:0,prod:0,ord:0,rem:0,sv:0};
+  let grpSV=0;
+  STOCK.forEach(s=>{
+    s.tot=((s.pas||0)+(s.apf||0))||s.tot||null;
+    if(s.t==='dat'){const cr=(s.tot||0)+(s.prod||0)-(s.ord||0);if(cr!==0)s.rem=cr;}
+    const g=s.g||'';
+    if(g.includes('บรรจุภัณฑ์'))inPack=true;
+    if(g.includes('ซื้อมาขาย'))inPack=false;
+    const pack=inPack||isPack(s);
+    const unitShort=pack?'<span style="color:#d4a017;font-weight:700">📦</span>':'<span style="color:#3d6b1e;font-weight:700">⚖️</span>';
+    const fmt=pack?ni:n;
+    const fprod=(v)=>{if(!v||v===0)return'<td class="num">-</td>';return`<td class="num">${pack?F(v,0):F(v,2)}</td>`;};
+    const sv=calcSV(s.price,s.tot,pack);
+    if(s.t==='pre'){
+      html+=`<tr class="grp-hdr">
+        <td class="grp">${g}</td><td>${s.lcd}</td><td style="text-align:left">${s.n}</td><td style="text-align:center">${unitShort}</td>
+        ${fmt(s.pas)}${fmt(s.apf)}${fmt(s.tot)}${fprod(s.prod)}${fmt(s.ord)}<td class="num">—</td>${n(s.price)}<td class="num">—</td>
+      </tr>`;
+    } else if(s.t==='sub'){
+      html+=`<tr class="subtotal">
+        <td colspan="4" style="font-weight:700;padding-left:24px">${s.n}</td>
+        ${fmt(s.pas)}${fmt(s.apf)}<td class="num" style="font-weight:800">${s.tot?F(s.tot,pack?0:2):'-'}</td>
+        ${fprod(s.prod)}${fmt(s.ord)}<td class="num">—</td>
+        <td class="num">—</td>
+        <td class="num${grpSV<0?' neg':''}" style="font-weight:700">${grpSV?F(grpSV,2):'-'}</td>
+      </tr>`;
+      if(pack){gtPack.apf+=s.apf||0;gtPack.tot+=s.tot||0;gtPack.prod+=s.prod||0;gtPack.ord+=s.ord||0;gtPack.rem+=s.rem||0;gtPack.sv+=grpSV;}
+      else{gtTon.pas+=s.pas||0;gtTon.apf+=s.apf||0;gtTon.tot+=s.tot||0;gtTon.prod+=s.prod||0;gtTon.rem+=s.rem||0;gtTon.sv+=grpSV;}
+      grpSV=0;
+    } else {
+      grpSV+=(sv||0);
+      html+=`<tr>
+        <td class="grp">${g}</td><td>${s.lcd}</td><td style="text-align:left">${s.n}</td><td style="text-align:center">${unitShort}</td>
+        ${fmt(s.pas)}${fmt(s.apf)}${fmt(s.tot)}${fprod(s.prod)}${fmt(s.ord)}${fmt(s.rem)}
+        ${n(s.price)}<td class="num${sv!=null&&sv<0?' neg':''}" style="font-weight:600">${sv!=null?F(sv,2):'-'}</td>
+      </tr>`;
+    }
+  });
+  const grandSV=gtTon.sv+gtPack.sv;
+  html+=`<tr class="subtotal" style="background:#d4edda">
+    <td colspan="4" style="font-size:13px;font-weight:800">⚖️ รวมทั้งหมด (ตัน)</td>
+    ${n(gtTon.pas)}${n(gtTon.apf)}${n(gtTon.tot)}${gtTon.prod?n(gtTon.prod):'<td></td>'}<td></td><td class="num">—</td>
+    <td></td><td class="num" style="font-weight:800">${F(gtTon.sv,2)}</td>
+  </tr>`;
+  html+=`<tr class="subtotal" style="background:#fff3cd">
+    <td colspan="4" style="font-size:13px;font-weight:800">📦 รวมทั้งหมด (กล่อง/ปี๊บ)</td>
+    <td></td>${ni(gtPack.apf)}${ni(gtPack.tot)}${gtPack.prod?ni(gtPack.prod):'<td></td>'}${ni(gtPack.ord)}<td class="num">—</td>
+    <td></td><td class="num" style="font-weight:800">${F(gtPack.sv,2)}</td>
+  </tr>`;
+  html+=`<tr style="background:var(--green-800);color:#fff;font-weight:800;font-size:12px">
+    <td colspan="11" style="padding:9px 12px">💰 มูลค่าสต๊อครวมทั้งหมด (บาท)</td>
+    <td class="num" style="padding:9px 12px;color:#ffd700;font-size:13px">${F(grandSV,2)}</td>
+  </tr></tbody>`;
+  document.getElementById('stockTbl').innerHTML=html;
+  document.getElementById('stTot').textContent='มูลค่าสต๊อครวม '+F(grandSV,2)+' บาท';
+}
+// ═══ INIT ═══
+// If MONTHLY_DATA has months, populate dropdown and load first month with data
+updBtn('fg');updBtn('fp');
+if(MONTHLY_DATA&&Object.keys(MONTHLY_DATA).length>0){
+  populateMonthDropdown();
+  switchMonth();
+  // Restore tab state: sync btn active class to match page active class
+  setTimeout(()=>{
+    try{
+      const pages=document.querySelectorAll('.page');
+      const ai=[...pages].findIndex(p=>p.classList.contains('active'));
+      document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===ai));
+      if(ai===2)renderStock();
+      loadMergedMonth();
+    }catch(e){}
+  },150);
+}else{
+  // Fallback: use hardcoded single-month data
+  window._totalF=16.64;window._totalAx=13.47;window._totalCp=0;window._totalCt=13.47;window._totalCw=-3.17;
+  renderAll();
+}
+
+// ═══ RESIZE FIX — re-render charts on window resize ═══
+let resizeTimer;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{
+    Object.values(CX).forEach(c=>{if(c&&c.resize)c.resize();});
+  },200);
+});
+
+// ── TAB SWITCHING ──
+function switchTab(idx){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',i===idx));
+  if(idx===1)setTimeout(()=>{try{renderAllCharts();}catch(e){}},50);
+  if(idx===2)setTimeout(()=>{try{renderStock();}catch(e){}},50);
+}
+
+</script>
+
+
+</body></html>
