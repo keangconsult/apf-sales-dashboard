@@ -859,7 +859,7 @@ function updateFromLink(){
     linkedUrl=saved;
     document.getElementById('btnUpdate').style.display='inline-flex';
     const name=saved.length>50?saved.substring(0,50)+'...':saved;
-    if(!uF.length){uF=[{name:'🔗 '+name,size:'Link'}];rTags();}
+    if(!uF.length){uF=[{name:'🔗 '+name,size:'Link'}];rTags();}updateFromLink(); //
   }
 })();
 
